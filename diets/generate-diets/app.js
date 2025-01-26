@@ -77,6 +77,18 @@ async function checkExistingDiet() {
   }
 }
 
+// Add this function before initializeDietGeneration
+async function startConversation() {
+  await playAnimation('greeting');
+  
+  if (hasUserInteracted) {
+    const welcomeMessage = "Hi! I'm Core AI. Let's have a chat about your diet goals. Feel free to tell me about what brings you here today.";
+    await speak(welcomeMessage);
+    addMessageToConversation('ai', welcomeMessage);
+  }
+}
+
+// Modify initializeDietGeneration to not call startConversation immediately
 function initializeDietGeneration() {
   const mainContent = document.querySelector('.main-content');
   if (!mainContent) return;
@@ -147,23 +159,17 @@ function initializeDietGeneration() {
   `;
 
   // Initialize event listeners
-  initializeEventListeners();
-  startConversation();
-}
-
-// Initialize event listeners for the diet generation interface
-function initializeEventListeners() {
   const startButton = document.getElementById('startButton');
   const interactionArea = document.querySelector('.interaction-area');
   const micButton = document.getElementById('micButton');
   const textInput = document.getElementById('textInput');
   const sendButton = document.getElementById('sendButton');
 
-  startButton.addEventListener('click', () => {
+  startButton.addEventListener('click', async () => {
     hasUserInteracted = true;
     startButton.style.display = 'none';
     interactionArea.style.display = 'flex';
-    startConversation();
+    await startConversation(); // Only start conversation when button is clicked
   });
 
   micButton.addEventListener('mousedown', startListening);
@@ -178,6 +184,9 @@ function initializeEventListeners() {
   });
 
   sendButton.addEventListener('click', handleTextSubmit);
+
+  // Add initial AI message
+  addMessageToConversation('ai', "Hi! I'm your AI nutritionist. Click 'Start Your Diet Journey' when you're ready to begin.");
 }
 
 // Voice configuration
