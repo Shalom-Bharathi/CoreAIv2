@@ -571,49 +571,32 @@ h1, h2, h3, h4, h5, h6 {
 /* Outcomes Enhancement */
 .outcomes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .outcome-item {
-  padding: 1.5rem;
-  border-radius: 1rem;
-  background: var(--glass-background);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.4s ease;
-  cursor: pointer;
+  padding: 1rem;
+  background: var(--glass-background);
+  border-radius: 0.5rem;
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
 }
 
 .outcome-item:hover {
-  transform: translateY(-8px) scale(1.02);
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .outcome-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: white;
-  color: var(--primary);
-  border-radius: 50%;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.outcome-item:hover .outcome-icon {
-  background: var(--primary-light);
-  transform: rotate(360deg);
+  width: 24px;
+  height: 24px;
+  color: var(--success);
 }
 
 /* Activity Tags Enhancement */
@@ -798,4 +781,26 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 4px;
   text-align: center;
   border: 1px solid #ef9a9a;
+}
+
+/* Add these new styles */
+
+.special-tips-list {
+    list-style: none;
+    padding: 0;
+}
+
+.special-tip {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--glass-background);
+    border-radius: 0.5rem;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.special-tip:hover {
+    transform: translateX(8px);
+    background: var(--primary-light);
+    border-color: var(--primary);
 }
