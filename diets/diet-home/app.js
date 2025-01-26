@@ -48,18 +48,25 @@ db.collection('API').onSnapshot(querySnapshot => {
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
-  // Check authentication state
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      await loadUserDietPlan();
-      initializeCharts();
-      initializeEventListeners();
-      updateDashboardStats();
-    } else {
-      window.location.href = '../auth/login.html';
-    }
-  });
+  try {
+    // Check authentication state
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        await loadUserDietPlan();
+        // Wait for DOM elements to be ready
+        setTimeout(() => {
+          initializeCharts();
+          initializeEventListeners();
+          updateDashboardStats();
+        }, 100);
+      } else {
+        window.location.href = '../auth/login.html';
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing app:', error);
+  }
 }
 
 // API Keys and configuration
@@ -684,40 +691,93 @@ async function processAudioResponse(audioBlob) {
 }
 
 // Function to display the generated diet plan
-function displayDietPlan(dietPlan) {
-  const mainContent = document.querySelector('.diet-experience-container');
-  if (!mainContent) {
-    console.error('Could not find main content container');
-    return;
+function displayDietPlan() {
+  const previewElement = document.getElementById('dietPlanPreview');
+  const fullPlanElement = document.getElementById('fullDietPlan');
+  
+  if (!previewElement || !fullPlanElement) return;
+
+  try {
+    const preview = `
+# Your Diet Plan Summary
+## Daily Nutrition
+- Calories: ${userDietPlan.plan.dailyNutrition.calories}
+- Protein: ${userDietPlan.plan.dailyNutrition.macros.protein}%
+- Carbs: ${userDietPlan.plan.dailyNutrition.macros.carbs}%
+- Fats: ${userDietPlan.plan.dailyNutrition.macros.fats}%
+
+## Today's Meals
+${userDietPlan.plan.mealSchedule.map(meal => 
+  `### ${meal.name} (${meal.time})\n- ${meal.options[0]}`
+).join('\n')}
+    `;
+
+    const fullPlan = `
+# Complete Diet Plan
+${preview}
+
+## Approved Foods
+### Proteins
+${userDietPlan.plan.approvedFoods.proteins.join('\n- ')}
+
+### Carbohydrates
+${userDietPlan.plan.approvedFoods.carbs.join('\n- ')}
+
+### Fats
+${userDietPlan.plan.approvedFoods.fats.join('\n- ')}
+
+### Vegetables
+${userDietPlan.plan.approvedFoods.vegetables.join('\n- ')}
+
+### Fruits
+${userDietPlan.plan.approvedFoods.fruits.join('\n- ')}
+
+## Foods to Avoid
+${userDietPlan.plan.avoidFoods.join('\n- ')}
+
+## Weekly Plan
+${Object.entries(userDietPlan.plan.weeklyPlan).map(([day, meals]) => 
+  `### ${day.charAt(0).toUpperCase() + day.slice(1)}\n- Breakfast: ${meals.breakfast}\n- Lunch: ${meals.lunch}\n- Dinner: ${meals.dinner}`
+).join('\n\n')}
+
+## Progress Tracking
+### Weekly Goals
+${userDietPlan.plan.progressTracking.weeklyGoals.join('\n- ')}
+
+### Monthly Goals
+${userDietPlan.plan.progressTracking.monthlyGoals.join('\n- ')}
+
+### Metrics to Track
+${userDietPlan.plan.progressTracking.metrics.join('\n- ')}
+
+## Recommended Supplements
+${userDietPlan.plan.supplements.map(supp => 
+  `### ${supp.name}\n- Dosage: ${supp.dosage}\n- Timing: ${supp.timing}`
+).join('\n\n')}
+    `;
+
+    previewElement.innerHTML = marked.parse(preview);
+    fullPlanElement.innerHTML = marked.parse(fullPlan);
+
+    // Update dashboard stats with the plan data
+    document.getElementById('dailyCalories').textContent = 
+      `${userDietPlan.mealsLogged || 0}/${userDietPlan.plan.dailyNutrition.calories}`;
+    
+    // Update macros chart
+    if (macrosChart) {
+      macrosChart.data.datasets[0].data = [
+        userDietPlan.plan.dailyNutrition.macros.protein,
+        userDietPlan.plan.dailyNutrition.macros.carbs,
+        userDietPlan.plan.dailyNutrition.macros.fats
+      ];
+      macrosChart.update();
+    }
+
+  } catch (error) {
+    console.error('Error displaying diet plan:', error);
+    previewElement.textContent = 'Error displaying diet plan';
+    fullPlanElement.textContent = 'Error displaying full diet plan';
   }
-
-  mainContent.innerHTML = `
-    <div class="diet-plan-card">
-      <div class="diet-plan-content">
-        ${marked.parse(dietPlan)}
-      </div>
-      <div class="diet-plan-actions">
-        <button class="button-primary" onclick="saveDietPlan()">
-          Save Diet Plan
-        </button>
-        <button class="button-secondary" onclick="downloadDietPlan()">
-          Download PDF
-        </button>
-      </div>
-    </div>
-  `;
-
-  // Scroll to top to show the diet plan
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Add animation to the diet plan card
-  const dietPlanCard = mainContent.querySelector('.diet-plan-card');
-  gsap.from(dietPlanCard, {
-    opacity: 0,
-    y: 20,
-    duration: 0.5,
-    ease: "back.out(1.7)"
-  });
 }
 
 // Add these functions to handle save and download
@@ -850,7 +910,7 @@ function addMessageToConversation(type, content) {
   }
 }
 
-// Load user's diet plan from Firestore
+// Update loadUserDietPlan function to only handle JSON format
 async function loadUserDietPlan() {
   try {
     const dietSnapshot = await db.collection('diets')
@@ -859,15 +919,24 @@ async function loadUserDietPlan() {
       .limit(1)
       .get();
 
-    if (dietSnapshot.empty) {
+    if (!dietSnapshot.empty) {
+      userDietPlan = dietSnapshot.docs[0].data();
+      if (userDietPlan && userDietPlan.plan && typeof userDietPlan.plan === 'object') {
+        displayDietPlan();
+        updateDashboardStats();
+      } else {
+        console.error('Invalid diet plan format');
+        document.getElementById('dietPlanPreview').textContent = 'Error: Invalid diet plan format. Please generate a new plan.';
+        setTimeout(() => {
+          window.location.href = '../generate-diets/index.html';
+        }, 2000);
+      }
+    } else {
       window.location.href = '../generate-diets/index.html';
-      return;
     }
-
-    userDietPlan = dietSnapshot.docs[0].data();
-    displayDietPlanPreview();
   } catch (error) {
     console.error('Error loading diet plan:', error);
+    document.getElementById('dietPlanPreview').textContent = 'Error loading diet plan';
   }
 }
 
@@ -1059,7 +1128,7 @@ async function updateDashboardStats() {
 
     // Update stats
     document.getElementById('dailyCalories').textContent = 
-      `${dailyCalories}/${userDietPlan.dailyCalories}`;
+      `${dailyCalories}/${userDietPlan.plan.dailyNutrition.calories}`;
     document.getElementById('mealsLogged').textContent = 
       mealsSnapshot.size;
     
@@ -1128,18 +1197,6 @@ async function getCaloriesData(dates) {
   }
 
   return caloriesData;
-}
-
-// Display Diet Plan Preview
-function displayDietPlanPreview() {
-  const previewElement = document.getElementById('dietPlanPreview');
-  const fullPlanElement = document.getElementById('fullDietPlan');
-  
-  // Create a summary version for the preview
-  const summary = userDietPlan.plan.split('\n').slice(0, 5).join('\n') + '\n\n...';
-  
-  previewElement.innerHTML = marked.parse(summary);
-  fullPlanElement.innerHTML = marked.parse(userDietPlan.plan);
 }
 
 // Utility Functions
