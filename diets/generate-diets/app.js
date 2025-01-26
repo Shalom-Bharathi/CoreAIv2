@@ -15,6 +15,18 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 
+// State variables
+let currentQuestionIndex = 0;
+let userResponses = [];
+let isListening = false;
+let conversationComplete = false;
+let hasUserInteracted = false;
+let requiredInfo = {
+  goals: false,
+  dietary: false,
+  lifestyle: false
+};
+
 // API Keys and configuration
 let API_KEY;
 let thingsRefx;
@@ -36,6 +48,14 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
 
 const OPENAI_API_KEY = API_KEY;
 
+// Questions array
+const questions = [
+  "Tell me about your fitness journey and what motivates you to make a change in your diet?",
+  "Paint me a picture of your typical day - from morning to night. What does your eating schedule look like?",
+  "What's your relationship with food? Any comfort foods or dishes that bring back memories?",
+  "If you could wave a magic wand and achieve your ideal health, what would that look like?"
+];
+
 // Voice configuration
 const USE_ELEVEN_LABS = false; // Set to true to use ElevenLabs, false for browser speech
 let ELEVEN_LABS_KEY;
@@ -49,27 +69,6 @@ if (USE_ELEVEN_LABS) {
     });
   });
 }
-
-// Questions and state variables
-const questions = [
-  "Tell me about your fitness journey and what motivates you to make a change in your diet?",
-  "Paint me a picture of your typical day - from morning to night. What does your eating schedule look like?",
-  "What's your relationship with food? Any comfort foods or dishes that bring back memories?",
-  "If you could wave a magic wand and achieve your ideal health, what would that look like?"
-];
-
-let currentQuestionIndex = 0;
-let userResponses = [];
-let isListening = false;
-let conversationComplete = false;
-let requiredInfo = {
-  goals: false,
-  dietary: false,
-  lifestyle: false
-};
-
-// Add this variable at the top with other state variables
-let hasUserInteracted = false;
 
 // Add this function at the beginning of the file, after Firebase initialization
 async function checkExistingDiet() {
@@ -270,6 +269,10 @@ async function stopListening() {
 }
 
 async function handleUserInput(input) {
+  if (!userResponses) {
+    userResponses = [];
+  }
+
   // Analyze input for required info
   if (input.toLowerCase().includes('goal') || input.toLowerCase().includes('want') || 
       input.toLowerCase().includes('need') || input.toLowerCase().includes('like')) {
@@ -502,123 +505,159 @@ function showLoadingPopup(message) {
   return popup;
 }
 
-// Modify the generateDietPlan function to include more comprehensive information
+// Function to generate diet plan
 async function generateDietPlan() {
-  const userResponses = {
-    goals: requiredInfo.goals ? userResponses[0] : '',
-    dietary: requiredInfo.dietary ? userResponses[1] : '',
-    lifestyle: requiredInfo.lifestyle ? userResponses[2] : ''
+  const userId = firebase.auth().currentUser.uid;
+  
+  // Basic diet template following the specified JSON format
+  const dietPlan = {
+    user_id: userId,
+    diet_details: {
+      diet_type: "Balanced",
+      calories_per_day: 2000,
+      macronutrient_split: {
+        carbohydrates: {
+          percentage: 50,
+          source_examples: ["Whole grains", "Vegetables", "Fruits"]
+        },
+        proteins: {
+          percentage: 30,
+          source_examples: ["Lean meat", "Legumes", "Eggs"]
+        },
+        fats: {
+          percentage: 20,
+          source_examples: ["Avocado", "Nuts", "Olive oil"]
+        }
+      },
+      micronutrients: {
+        vitamins: {
+          A: "700-900 mcg/day",
+          C: "75-90 mg/day",
+          D: "15-20 mcg/day"
+        },
+        minerals: {
+          calcium: "1000 mg/day",
+          iron: "8-18 mg/day",
+          potassium: "2600-3400 mg/day"
+        }
+      },
+      hydration_recommendation: {
+        daily_intake: "2.5 liters/day",
+        reminders: true,
+        tips: ["Drink water 30 minutes before meals", "Carry a reusable water bottle"]
+      },
+      meal_timing: {
+        breakfast: "7:00 AM - 8:00 AM",
+        lunch: "12:00 PM - 1:00 PM",
+        dinner: "7:00 PM - 8:00 PM",
+        snack_windows: ["10:00 AM - 11:00 AM", "4:00 PM - 5:00 PM"],
+        fasting_window: "8:00 PM - 7:00 AM"
+      },
+      additional_guidelines: {
+        dos: [
+          "Include a variety of vegetables in meals",
+          "Choose whole foods over processed foods",
+          "Consume small, frequent meals to maintain energy levels",
+          "Incorporate healthy snacks like nuts and seeds"
+        ],
+        donts: [
+          "Avoid sugary beverages and snacks",
+          "Limit fried and high-fat foods",
+          "Reduce salt intake to less than 5g per day",
+          "Do not skip meals, especially breakfast"
+        ],
+        special_tips: [
+          "Eat mindfully and chew thoroughly",
+          "Monitor portion sizes with your hand or a plate guide",
+          "Plan meals ahead to avoid unhealthy choices"
+        ]
+      },
+      diet_goal: "Weight Maintenance",
+      expected_outcomes: {
+        energy_boost: true,
+        improved_digestion: true,
+        stable_blood_sugar: true,
+        "healthy weight management": true
+      },
+      physical_activity: {
+        recommendation: "30 minutes of moderate exercise, 5 times a week",
+        suggested_activities: ["Brisk walking", "Cycling", "Yoga"]
+      }
+    }
   };
 
-  const prompt = `As a professional nutritionist, create a comprehensive and personalized diet plan based on the following information:
-
-User's Goals and Motivation:
-${userResponses.goals}
-
-Dietary Preferences and Restrictions:
-${userResponses.dietary}
-
-Lifestyle and Daily Schedule:
-${userResponses.lifestyle}
-
-Please provide a detailed diet plan that includes:
-1. Daily caloric needs and precise macronutrient breakdown (protein, carbs, fat percentages)
-2. Meal timing recommendations based on their schedule
-3. Specific food suggestions for each meal with portion sizes in grams
-4. Weekly meal plan template with alternatives
-5. Approved food list categorized by:
-   - Proteins
-   - Carbohydrates
-   - Healthy Fats
-   - Vegetables
-   - Fruits
-   - Snacks
-6. Foods to avoid or limit
-7. Meal prep guidelines
-8. Progress tracking metrics:
-   - Weekly weigh-in targets
-   - Body measurements
-   - Progress photos schedule
-   - Energy levels
-9. Specific goals:
-   - Short term (2 weeks)
-   - Medium term (6 weeks)
-   - Long term (12 weeks)
-10. Supplement recommendations if needed
-
-Format the response in clear sections using markdown with specific headings for each category.
-Include specific portion sizes and measurements for accurate tracking.`;
-
   try {
-    showLoadingPopup('Generating your personalized diet plan...');
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
+    await db.collection('diets').add({
+      ...dietPlan,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    const data = await response.json();
-    if (!data.choices || !data.choices[0]) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    const dietPlan = data.choices[0].message.content;
-    
-    // Save diet plan to Firestore
-    const dietDoc = await db.collection('diets').add({
-      userId: firebase.auth().currentUser.uid,
-      plan: dietPlan,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-      mealsLogged: 0,
-      responses: userResponses,
-      dailyCalories: extractDailyCalories(dietPlan),
-      macros: extractMacros(dietPlan)
-    });
-
-    // Redirect to diet dashboard
-    window.location.href = '../diet-home/index.html';
+    showSuccessAndRedirect();
   } catch (error) {
-    console.error('Error generating diet plan:', error);
-    showError('Failed to generate diet plan. Please try again.');
-  } finally {
-    hideLoadingPopup();
+    console.error('Error saving diet plan:', error);
+    showError('Failed to save diet plan. Please try again.');
   }
 }
 
-// Helper function to extract daily calories from diet plan
-function extractDailyCalories(dietPlan) {
-  const calorieMatch = dietPlan.match(/(\d{1,4})\s*(?:to\s*\d{1,4}\s*)?calories/i);
-  return calorieMatch ? parseInt(calorieMatch[1]) : 2000;
+// Function to show success animation and redirect
+function showSuccessAndRedirect() {
+  const mainContent = document.querySelector('.main-content');
+  
+  // Create success overlay
+  const successOverlay = document.createElement('div');
+  successOverlay.className = 'success-overlay';
+  successOverlay.innerHTML = `
+    <div class="success-content">
+      <lottie-player
+        src="https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json"
+        background="transparent"
+        speed="1"
+        style="width: 200px; height: 200px;"
+        autoplay
+      ></lottie-player>
+      <h2>Diet Plan Generated!</h2>
+      <p>Redirecting you to your dashboard...</p>
+    </div>
+  `;
+  
+  mainContent.appendChild(successOverlay);
+  
+  // Add animation classes
+  gsap.from(successOverlay, {
+    opacity: 0,
+    scale: 0.8,
+    duration: 0.5,
+    ease: "back.out(1.7)"
+  });
+  
+  // Redirect after animation
+  setTimeout(() => {
+    window.location.href = '../diet-home/index.html';
+  }, 3000);
 }
 
-// Helper function to extract macros from diet plan
-function extractMacros(dietPlan) {
-  const defaultMacros = { protein: 30, carbs: 40, fat: 30 };
+// Function to show error message
+function showError(message) {
+  const errorToast = document.createElement('div');
+  errorToast.className = 'error-toast';
+  errorToast.textContent = message;
   
-  const macroMatches = {
-    protein: dietPlan.match(/protein:\s*(\d{1,3})%/i),
-    carbs: dietPlan.match(/carb(?:ohydrate)?s:\s*(\d{1,3})%/i),
-    fat: dietPlan.match(/fat:\s*(\d{1,3})%/i)
-  };
-
-  return {
-    protein: macroMatches.protein ? parseInt(macroMatches.protein[1]) : defaultMacros.protein,
-    carbs: macroMatches.carbs ? parseInt(macroMatches.carbs[1]) : defaultMacros.carbs,
-    fat: macroMatches.fat ? parseInt(macroMatches.fat[1]) : defaultMacros.fat
-  };
+  document.body.appendChild(errorToast);
+  
+  gsap.from(errorToast, {
+    y: 50,
+    opacity: 0,
+    duration: 0.3
+  });
+  
+  setTimeout(() => {
+    gsap.to(errorToast, {
+      y: 50,
+      opacity: 0,
+      duration: 0.3,
+      onComplete: () => errorToast.remove()
+    });
+  }, 3000);
 }
 
 // Function to process audio response using Whisper API
@@ -772,19 +811,14 @@ async function playAnimation(type) {
   return new Promise(resolve => setTimeout(resolve, 1000));
 }
 
-// Add this new function to handle text input
+// Function to handle text input
 async function handleTextSubmit() {
   const textInput = document.getElementById('textInput');
   const text = textInput.value.trim();
   
   if (text) {
-    // Add user message to conversation
     addMessageToConversation('user', text);
-    
-    // Clear input
     textInput.value = '';
-    
-    // Process the text input
     await handleUserInput(text);
   }
 }
