@@ -79,27 +79,7 @@ async function checkExistingDiet() {
 
 // Initialize the application
 async function initializeApp() {
-  try {
-    // Set up auth state listener
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        currentUser = user;
-        console.log('User authenticated:', user.uid);
-        await checkExistingDiet();
-        
-        // Initialize the diet generation interface if no existing plan
-        if (!document.querySelector('.diet-experience-container')) {
-          initializeDietGeneration();
-        }
-      } else {
-        console.log('No user authenticated, redirecting to login');
-        window.location.href = '../auth/login.html';
-      }
-    });
-  } catch (error) {
-    console.error('Error initializing app:', error);
-    showError('Failed to initialize application. Please refresh the page.');
-  }
+  initializeDietGeneration();
 }
 
 // Start the application when the document is ready
