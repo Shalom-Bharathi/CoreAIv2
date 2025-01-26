@@ -39,6 +39,8 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-hover: 0 25px 30px -12px rgb(0 0 0 / 0.25), 0 18px 20px -15px rgb(0 0 0 / 0.2);
+    --shadow-active: 0 25px 35px -15px rgb(99 102 241 / 0.4), 0 10px 20px -10px rgb(99 102 241 / 0.2);
 
     /* Glass effect */
     --glass-background: rgba(255, 255, 255, 0.7);
@@ -166,7 +168,7 @@ h1, h2, h3, h4, h5, h6 {
 .main-content {
     flex: 1;
     margin-left: 280px;
-    padding: 2.5rem;
+    padding: 3rem;
     position: relative;
 }
 
@@ -190,9 +192,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Dashboard Header Enhancement */
 .dashboard-header {
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
     position: relative;
-    padding-bottom: 1.5rem;
+    padding-bottom: 2rem;
 }
 
 .dashboard-header::after {
@@ -225,8 +227,8 @@ h1, h2, h3, h4, h5, h6 {
 .overview-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 2.5rem;
+    margin-bottom: 4rem;
 }
 
 /* Modern Card Design */
@@ -270,7 +272,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .card:hover {
     transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-hover);
 }
 
 .card:hover::before {
@@ -349,8 +351,8 @@ h1, h2, h3, h4, h5, h6 {
 .charts-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 3rem;
+    margin-bottom: 4rem;
 }
 
 .chart-card {
@@ -366,8 +368,8 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    margin: 2.5rem 0;
-    gap: 2rem;
+    margin: 3rem 0;
+    gap: 3rem;
 }
 
 .macro-ring {
@@ -403,7 +405,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .macro-ring:hover {
-    transform: scale(1.1) rotate(-5deg);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-active);
 }
 
 .macro-ring:hover::before {
@@ -436,14 +439,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Meal Timeline Enhancement */
 .meal-timeline {
-    padding: 1.5rem;
+    padding: 2rem;
 }
 
 .meal-time {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
-    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
     border-radius: 1rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -457,31 +460,29 @@ h1, h2, h3, h4, h5, h6 {
 
 .meal-time:hover {
     transform: translateX(8px);
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 /* Guidelines Enhancement */
 .guidelines-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 3rem;
+    margin-bottom: 4rem;
 }
 
 .guidelines-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
 .guidelines-list li {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1.25rem;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
     border-radius: 1rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -493,9 +494,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .guidelines-list li:hover {
     transform: translateX(8px) translateY(-4px);
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 .dos-list li::before,
@@ -526,12 +525,12 @@ h1, h2, h3, h4, h5, h6 {
 .micro-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 2.5rem;
+    margin-bottom: 4rem;
 }
 
 .nutrient-item {
-    padding: 1.25rem;
+    padding: 1.5rem;
     border-radius: 1rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -539,16 +538,14 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .nutrient-item:hover {
     transform: translateY(-8px) scale(1.02);
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 .nutrient-item:hover .nutrient-name,
@@ -572,12 +569,12 @@ h1, h2, h3, h4, h5, h6 {
 .outcomes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1.5rem;
+    gap: 2rem;
+    margin: 2.5rem 0;
 }
 
 .outcome-item {
-    padding: 1.5rem;
+    padding: 1.75rem;
     border-radius: 1rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -585,16 +582,14 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-md);
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
     transition: all 0.4s ease;
     cursor: pointer;
 }
 
 .outcome-item:hover {
     transform: translateY(-8px) scale(1.02);
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 .outcome-icon {
@@ -620,12 +615,12 @@ h1, h2, h3, h4, h5, h6 {
 .activity-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-top: 1.5rem;
+    gap: 2.5rem;
+    margin-top: 2.5rem;
 }
 
 .activity-recommendation {
-    padding: 1.5rem;
+    padding: 1.75rem;
     border-radius: 1rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -638,13 +633,11 @@ h1, h2, h3, h4, h5, h6 {
 
 .activity-recommendation:hover {
     transform: translateY(-4px);
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 .activity-tag {
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 1.75rem;
     border-radius: 2rem;
     background: var(--glass-background);
     backdrop-filter: blur(8px);
@@ -654,13 +647,12 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
     transition: all 0.3s ease;
     cursor: pointer;
+    margin-bottom: 1rem;
 }
 
 .activity-tag:hover {
-    background: var(--gradient-primary);
-    color: white;
     transform: translateY(-4px) scale(1.05);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-active);
 }
 
 /* Enhanced Animations */
@@ -738,8 +730,18 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Responsive Enhancements */
 @media (max-width: 1400px) {
+    .main-content {
+        padding: 2.5rem;
+    }
+    
     .overview-cards {
-        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+    
+    .charts-grid,
+    .guidelines-grid,
+    .micro-grid {
+        gap: 2.5rem;
     }
 }
 
@@ -762,17 +764,20 @@ h1, h2, h3, h4, h5, h6 {
     
     .main-content {
         margin-left: 0;
-        padding: 1.5rem;
+        padding: 2rem;
     }
     
     .overview-cards,
     .guidelines-grid,
     .micro-grid,
     .activity-content {
-        grid-template-columns: 1fr;
+        gap: 2rem;
     }
     
-    .card {
+    .card,
+    .nutrient-item,
+    .outcome-item,
+    .activity-recommendation {
         padding: 1.5rem;
     }
     
