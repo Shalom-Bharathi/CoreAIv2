@@ -13,7 +13,11 @@ if (!firebase.apps.length) {
 
   firebase.initializeApp(firebaseConfig);
 }
+
+// Initialize Firebase services
 const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
 
 // Global variables
 let currentUser = null;
@@ -21,6 +25,14 @@ let userDietPlan = null;
 let nutritionChart = null;
 let macrosChart = null;
 let API_KEY = null;
+let userResponses = [];
+let isListening = false;
+let conversationComplete = false;
+let requiredInfo = {
+  goals: false,
+  dietary: false,
+  lifestyle: false
+};
 
 // Get API Key from Firebase
 db.collection('API').onSnapshot(querySnapshot => {
@@ -89,16 +101,6 @@ const questions = [
 ];
 
 let currentQuestionIndex = 0;
-let userResponses = [];
-let isListening = false;
-let conversationComplete = false;
-let requiredInfo = {
-  goals: false,
-  dietary: false,
-  lifestyle: false
-};
-
-// Add this variable at the top with other state variables
 let hasUserInteracted = false;
 
 // Add this function at the beginning of the file, after Firebase initialization
@@ -285,6 +287,11 @@ async function stopListening() {
 }
 
 async function handleUserInput(input) {
+  if (!input) return;
+
+  // Add the input to userResponses array
+  userResponses.push(input);
+
   // Analyze input for required info
   if (input.toLowerCase().includes('goal') || input.toLowerCase().includes('want') || 
       input.toLowerCase().includes('need') || input.toLowerCase().includes('like')) {
@@ -299,9 +306,7 @@ async function handleUserInput(input) {
     requiredInfo.lifestyle = true;
   }
 
-  userResponses.push(input);
-  
-  // Ensure minimum 3 questions before generating plan
+  // Check if we have enough information
   if (userResponses.length >= 3 && Object.values(requiredInfo).filter(v => v).length >= 2) {
     conversationComplete = true;
     await speak("Perfect! I have enough information now. Let me create your personalized diet plan.");
@@ -517,24 +522,24 @@ function showLoadingPopup(message) {
   return popup;
 }
 
-// Modify the generateDietPlan function to include more comprehensive information
+// Modify the generateDietPlan function to use the global userResponses
 async function generateDietPlan() {
-  const userResponses = {
-    goals: requiredInfo.goals ? userResponses[0] : '',
-    dietary: requiredInfo.dietary ? userResponses[1] : '',
-    lifestyle: requiredInfo.lifestyle ? userResponses[2] : ''
+  const userResponseData = {
+    goals: userResponses[0] || '',
+    dietary: userResponses[1] || '',
+    lifestyle: userResponses[2] || ''
   };
 
   const prompt = `As a professional nutritionist, create a comprehensive and personalized diet plan based on the following information:
 
 User's Goals and Motivation:
-${userResponses.goals}
+${userResponseData.goals}
 
 Dietary Preferences and Restrictions:
-${userResponses.dietary}
+${userResponseData.dietary}
 
 Lifestyle and Daily Schedule:
-${userResponses.lifestyle}
+${userResponseData.lifestyle}
 
 Please provide a detailed diet plan that includes:
 1. Daily caloric needs and precise macronutrient breakdown (protein, carbs, fat percentages)
@@ -565,7 +570,7 @@ Format the response in clear sections using markdown with specific headings for 
 Include specific portion sizes and measurements for accurate tracking.`;
 
   try {
-    showLoadingPopup('Generating your personalized diet plan...');
+    const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -584,6 +589,10 @@ Include specific portion sizes and measurements for accurate tracking.`;
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
     const data = await response.json();
     if (!data.choices || !data.choices[0]) {
       throw new Error('Invalid response from OpenAI');
@@ -592,24 +601,30 @@ Include specific portion sizes and measurements for accurate tracking.`;
     const dietPlan = data.choices[0].message.content;
     
     // Save diet plan to Firestore
-    const dietDoc = await db.collection('diets').add({
-      userId: firebase.auth().currentUser.uid,
+    await db.collection('diets').add({
+      userId: currentUser.uid,
       plan: dietPlan,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       mealsLogged: 0,
-      responses: userResponses,
+      responses: userResponseData,
       dailyCalories: extractDailyCalories(dietPlan),
       macros: extractMacros(dietPlan)
     });
+
+    // Remove loading popup
+    if (loadingPopup) {
+      loadingPopup.remove();
+    }
 
     // Redirect to diet dashboard
     window.location.href = '../diet-home/index.html';
   } catch (error) {
     console.error('Error generating diet plan:', error);
     showError('Failed to generate diet plan. Please try again.');
-  } finally {
-    hideLoadingPopup();
+    if (loadingPopup) {
+      loadingPopup.remove();
+    }
   }
 }
 
@@ -1143,4 +1158,16 @@ function closeModal(modalId) {
 const link = document.createElement('link');
 link.rel = 'icon';
 link.href = 'data:;base64,iVBORw0KGgo=';
-document.head.appendChild(link); 
+document.head.appendChild(link);
+
+// Add error display function
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-message';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+  
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 3000);
+} 
