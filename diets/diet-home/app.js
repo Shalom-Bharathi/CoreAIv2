@@ -13,6 +13,9 @@ class DietDashboard {
           if (!snapshot.empty) {
               const dietPlan = snapshot.docs[0].data();
               console.log('Raw diet plan data:', dietPlan); // Debug log
+              console.log('Raw diet plan data2:', dietPlan.diet_details); // Debug log
+              console.log('Raw diet plan data3:', dietPlan[diet_details]); // Debug log
+              console.log('Raw diet plan data4:', dietPlan['diet_details']); // Debug log
               this.renderDietPlan(dietPlan);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
@@ -64,24 +67,32 @@ class DietDashboard {
 
           // Update macro rings with safe access
           const macroRings = document.querySelectorAll('.macro-ring');
-          if (dietPlan.macronutrient_split) {
-              macroRings.forEach(ring => {
-                  const macroType = ring.getAttribute('data-macro');
-                  console.log('Processing macro type:', macroType); // Debug log
-                  console.log('Macro split data:', dietPlan.macronutrient_split); // Debug log
-                  
-                  let percentage = 0;
-                  if (dietPlan.macronutrient_split[macroType]) {
-                      percentage = dietPlan.macronutrient_split[macroType].percentage || 0;
-                  }
-                  
-                  ring.style.setProperty('--percentage', `${percentage}%`);
-                  const percentageElement = ring.querySelector('.percentage');
-                  if (percentageElement) {
-                      percentageElement.textContent = `${percentage}%`;
-                  }
-              });
-          }
+          const defaultMacros = {
+              carbohydrates: { percentage: 50 },
+              proteins: { percentage: 25 },
+              fats: { percentage: 25 }
+          };
+
+          macroRings.forEach(ring => {
+              const macroType = ring.getAttribute('data-macro');
+              console.log('Processing macro type:', macroType); // Debug log
+              
+              // Get the macro data with fallback
+              const macroData = (dietPlan.macronutrient_split && dietPlan.macronutrient_split[macroType]) 
+                  ? dietPlan.macronutrient_split[macroType] 
+                  : defaultMacros[macroType];
+              
+              console.log(`Macro data for ${macroType}:`, macroData); // Debug log
+              
+              const percentage = macroData?.percentage || defaultMacros[macroType].percentage;
+              console.log(`Percentage for ${macroType}:`, percentage); // Debug log
+              
+              ring.style.setProperty('--percentage', `${percentage}%`);
+              const percentageElement = ring.querySelector('.percentage');
+              if (percentageElement) {
+                  percentageElement.textContent = `${percentage}%`;
+              }
+          });
 
           // Update meal timeline
           const timelineContainer = document.querySelector('.meal-timeline');
