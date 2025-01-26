@@ -13,7 +13,6 @@ const state = {
 };
 
 const db = firebase.firestore();
-let currentUser = null;
 
 // API Keys and configuration
 let API_KEY;
@@ -56,25 +55,6 @@ if (USE_ELEVEN_LABS) {
       console.log("ElevenLabs credentials loaded");
     });
   });
-}
-
-// Check for existing diet plan
-async function checkExistingDiet() {
-  if (!currentUser) return;
-
-  try {
-    const dietSnapshot = await db.collection('diets')
-      .where('user_id', '==', currentUser.uid)
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get();
-
-    if (!dietSnapshot.empty) {
-      window.location.href = '../diet-home/index.html';
-    }
-  } catch (error) {
-    console.error('Error checking existing diet:', error);
-  }
 }
 
 // Initialize the application
@@ -495,13 +475,6 @@ function showLoadingPopup(message) {
 
 // Function to generate diet plan
 async function generateDietPlan() {
-  if (!firebase.auth().currentUser) {
-    showError('Please sign in to generate a diet plan.');
-    return;
-  }
-
-  const userId = firebase.auth().currentUser.uid;
-  
   // Show loading state
   const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
   
@@ -513,7 +486,6 @@ async function generateDietPlan() {
       
       Generate a comprehensive diet plan following this exact JSON structure:
       {
-        "user_id": "string",
         "diet_details": {
           "diet_type": "string",
           "calories_per_day": number,
@@ -607,8 +579,7 @@ async function generateDietPlan() {
     // Parse the generated diet plan
     const generatedDietPlan = JSON.parse(data.choices[0].message.content);
     
-    // Add user ID and responses
-    generatedDietPlan.user_id = "nOwDrTnvccNt8i2qVqaHAovO6Jc2";
+    // Add responses and timestamp
     generatedDietPlan.user_responses = state.userResponses;
 
     // Save to Firebase
