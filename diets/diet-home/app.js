@@ -1,18 +1,24 @@
 class DietDashboard {
     constructor() {
         this.db = firebase.firestore();
+        this.loadDietPlan();
     }
-
 
     async loadDietPlan() {
         try {
-            const userId = 'nOwDrTnvccNt8i2qVqaHAovO6Jc2'; // This will be replaced with actual user ID later
-            console.log('Fetching diet plan for user:', userId);
+            // Get the diet ID from localStorage
+            const dietId = localStorage.getItem('currentDietId');
+            if (!dietId) {
+                this.showError('No diet plan found. Please generate a diet plan first.');
+                return;
+            }
+
+            console.log('Fetching diet plan with ID:', dietId);
             
-            const dietDoc = await this.db.collection('diets').doc(userId).get();
+            const dietDoc = await this.db.collection('diets').doc(dietId).get();
             
             if (dietDoc.exists) {
-                const data = dietDoc.data().diet_details();
+                const data = dietDoc.data();
                 console.log('Diet plan found:', data);
                 this.renderDietPlan(data);
             } else {
