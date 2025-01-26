@@ -173,14 +173,17 @@ function addMessageToConversation(type, content) {
   // If it's an AI message, just update the status text
   if (type === 'ai') {
     const statusText = document.getElementById('statusText');
-    if (statusText) {
+    const aiStatus = document.querySelector('.ai-status');
+    if (statusText && aiStatus) {
       statusText.textContent = content;
       // Add glow animation to the AI avatar
       const avatarContainer = document.querySelector('.ai-avatar-container');
       if (avatarContainer) {
         avatarContainer.classList.add('speaking');
+        aiStatus.classList.add('speaking');
         setTimeout(() => {
           avatarContainer.classList.remove('speaking');
+          aiStatus.classList.remove('speaking');
         }, 3000);
       }
     }
@@ -507,55 +510,41 @@ function showLoadingPopup(message) {
   return popup;
 }
 
-// Modify the generateDietPlan function to include more comprehensive information
+// Add generateDietPlan function definition before handleUserInput
 async function generateDietPlan() {
-  const userResponses = {
-    goals: requiredInfo.goals ? userResponses[0] : '',
-    dietary: requiredInfo.dietary ? userResponses[1] : '',
-    lifestyle: requiredInfo.lifestyle ? userResponses[2] : ''
+  const userResponseData = {
+    goals: userResponses[0] || '',
+    dietary: userResponses[1] || '',
+    lifestyle: userResponses[2] || ''
   };
 
   const prompt = `As a professional nutritionist, create a comprehensive and personalized diet plan based on the following information:
 
 User's Goals and Motivation:
-${userResponses.goals}
+${userResponseData.goals}
 
 Dietary Preferences and Restrictions:
-${userResponses.dietary}
+${userResponseData.dietary}
 
 Lifestyle and Daily Schedule:
-${userResponses.lifestyle}
+${userResponseData.lifestyle}
 
 Please provide a detailed diet plan that includes:
-1. Daily caloric needs and precise macronutrient breakdown (protein, carbs, fat percentages)
-2. Meal timing recommendations based on their schedule
-3. Specific food suggestions for each meal with portion sizes in grams
-4. Weekly meal plan template with alternatives
-5. Approved food list categorized by:
-   - Proteins
-   - Carbohydrates
-   - Healthy Fats
-   - Vegetables
-   - Fruits
-   - Snacks
-6. Foods to avoid or limit
+1. Daily caloric needs and precise macronutrient breakdown
+2. Meal timing recommendations
+3. Specific food suggestions for each meal
+4. Weekly meal plan template
+5. Approved food list
+6. Foods to avoid
 7. Meal prep guidelines
-8. Progress tracking metrics:
-   - Weekly weigh-in targets
-   - Body measurements
-   - Progress photos schedule
-   - Energy levels
-9. Specific goals:
-   - Short term (2 weeks)
-   - Medium term (6 weeks)
-   - Long term (12 weeks)
+8. Progress tracking metrics
+9. Short and long term goals
 10. Supplement recommendations if needed
 
-Format the response in clear sections using markdown with specific headings for each category.
-Include specific portion sizes and measurements for accurate tracking.`;
+Format the response in clear sections using markdown.`;
 
   try {
-    showLoadingPopup('Generating your personalized diet plan...');
+    const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -574,32 +563,32 @@ Include specific portion sizes and measurements for accurate tracking.`;
       })
     });
 
-    const data = await response.json();
-    if (!data.choices || !data.choices[0]) {
-      throw new Error('Invalid response from OpenAI');
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
     }
 
+    const data = await response.json();
     const dietPlan = data.choices[0].message.content;
     
-    // Save diet plan to Firestore
-    const dietDoc = await db.collection('diets').add({
-      userId: firebase.auth().currentUser.uid,
+    await db.collection('diets').add({
+      userId: currentUser.uid,
       plan: dietPlan,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       mealsLogged: 0,
-      responses: userResponses,
+      responses: userResponseData,
       dailyCalories: extractDailyCalories(dietPlan),
       macros: extractMacros(dietPlan)
     });
 
-    // Redirect to diet dashboard
+    if (loadingPopup) {
+      loadingPopup.remove();
+    }
+
     window.location.href = '../diet-home/index.html';
   } catch (error) {
     console.error('Error generating diet plan:', error);
     showError('Failed to generate diet plan. Please try again.');
-  } finally {
-    hideLoadingPopup();
   }
 }
 
@@ -717,16 +706,30 @@ link.rel = 'icon';
 link.href = 'data:;base64,iVBORw0KGgo='; // Empty favicon
 document.head.appendChild(link);
 
-// Add CSS styles for the AI speaking animation
+// Update the CSS animation for the AI talking effect
 const style = document.createElement('style');
 style.textContent = `
   .ai-avatar-container.speaking {
-    animation: glow 2s ease-in-out infinite;
+    animation: glow 2s ease-in-out infinite, pulse 1s ease-in-out infinite;
   }
 
   @keyframes glow {
     0%, 100% { box-shadow: 0 0 5px rgba(0, 123, 255, 0.2); }
     50% { box-shadow: 0 0 20px rgba(0, 123, 255, 0.6); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .ai-status.speaking {
+    animation: statusPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
   }
 
   .text-input-container input {
