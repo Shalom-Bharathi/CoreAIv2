@@ -518,30 +518,115 @@ async function generateDietPlan() {
     lifestyle: userResponses[2] || ''
   };
 
-  const prompt = `As a professional nutritionist, create a comprehensive and personalized diet plan based on the following information:
+  const prompt = `As an AI nutritionist specializing in South Indian cuisine, create a structured diet plan based on:
 
-User's Goals and Motivation:
-${userResponseData.goals}
+Goals: ${userResponseData.goals}
+Dietary Preferences: ${userResponseData.dietary}
+Lifestyle: ${userResponseData.lifestyle}
 
-Dietary Preferences and Restrictions:
-${userResponseData.dietary}
+Create a diet plan focusing exclusively on South Indian meals and ingredients. Provide a structured response in this exact format:
 
-Lifestyle and Daily Schedule:
-${userResponseData.lifestyle}
+{
+  "dailyNutrition": {
+    "calories": "number (e.g., 2000)",
+    "macros": {
+      "protein": "percentage",
+      "carbs": "percentage",
+      "fats": "percentage"
+    }
+  },
+  "mealSchedule": [
+    {
+      "name": "Breakfast",
+      "time": "7:00 AM",
+      "calories": "number",
+      "options": [
+        "South Indian breakfast option 1 (e.g., Idli with sambar)",
+        "South Indian breakfast option 2 (e.g., Dosa with chutney)",
+        "South Indian breakfast option 3 (e.g., Upma)"
+      ]
+    },
+    {
+      "name": "Lunch",
+      "time": "12:00 PM",
+      "calories": "number",
+      "options": [
+        "South Indian lunch option 1 (e.g., Rice with sambar and vegetables)",
+        "South Indian lunch option 2 (e.g., Bisibelebath)",
+        "South Indian lunch option 3 (e.g., Curd rice with pickle)"
+      ]
+    },
+    {
+      "name": "Dinner",
+      "time": "7:00 PM",
+      "calories": "number",
+      "options": [
+        "South Indian dinner option 1 (e.g., Ragi dosa)",
+        "South Indian dinner option 2 (e.g., Millet based dishes)",
+        "South Indian dinner option 3 (e.g., Light rice preparations)"
+      ]
+    }
+  ],
+  "approvedFoods": {
+    "proteins": ["Traditional South Indian protein sources like lentils, legumes, etc."],
+    "carbs": ["South Indian grains and carb sources"],
+    "fats": ["Traditional South Indian cooking oils and fat sources"],
+    "vegetables": ["Common South Indian vegetables"],
+    "fruits": ["Locally available South Indian fruits"]
+  },
+  "avoidFoods": ["List of foods to avoid"],
+  "weeklyPlan": {
+    "monday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "tuesday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "wednesday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "thursday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "friday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "saturday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    },
+    "sunday": {
+      "breakfast": "South Indian breakfast item",
+      "lunch": "South Indian lunch combination",
+      "dinner": "South Indian dinner item"
+    }
+  },
+  "progressTracking": {
+    "weeklyGoals": ["goal1", "goal2"],
+    "monthlyGoals": ["goal1", "goal2"],
+    "metrics": ["weight", "measurements", "progress_photos"]
+  },
+  "supplements": [
+    {
+      "name": "supplement",
+      "dosage": "amount",
+      "timing": "when to take"
+    }
+  ]
+}
 
-Please provide a detailed diet plan that includes:
-1. Daily caloric needs and precise macronutrient breakdown
-2. Meal timing recommendations
-3. Specific food suggestions for each meal
-4. Weekly meal plan template
-5. Approved food list
-6. Foods to avoid
-7. Meal prep guidelines
-8. Progress tracking metrics
-9. Short and long term goals
-10. Supplement recommendations if needed
-
-Format the response in clear sections using markdown.`;
+Ensure all meals are authentic South Indian dishes with proper regional names. Include traditional and healthy South Indian ingredients and cooking methods. All responses should be concise and structured exactly as shown above.`;
 
   try {
     const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
@@ -559,7 +644,8 @@ Format the response in clear sections using markdown.`;
           content: prompt
         }],
         temperature: 0.7,
-        max_tokens: 2000
+        max_tokens: 2000,
+        response_format: { type: "json_object" }  // Force JSON response
       })
     });
 
@@ -568,17 +654,18 @@ Format the response in clear sections using markdown.`;
     }
 
     const data = await response.json();
-    const dietPlan = data.choices[0].message.content;
+    const dietPlan = JSON.parse(data.choices[0].message.content);
     
+    // Save structured data to Firestore
     await db.collection('diets').add({
       userId: currentUser.uid,
-      plan: dietPlan,
+      plan: dietPlan, // Now storing structured JSON instead of markdown text
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       mealsLogged: 0,
       responses: userResponseData,
-      dailyCalories: extractDailyCalories(dietPlan),
-      macros: extractMacros(dietPlan)
+      dailyCalories: dietPlan.dailyNutrition.calories,
+      macros: dietPlan.dailyNutrition.macros
     });
 
     if (loadingPopup) {
