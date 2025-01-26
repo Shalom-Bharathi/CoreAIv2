@@ -156,16 +156,27 @@ function addMessageToConversation(type, content) {
   const conversationHistory = document.getElementById('conversationHistory');
   if (!conversationHistory) return;
   
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${type}`;
+  // Only add user messages to the conversation history
+  if (type === 'user') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(contentDiv);
+    conversationHistory.appendChild(messageDiv);
+    conversationHistory.scrollTop = conversationHistory.scrollHeight;
+  }
   
-  const contentDiv = document.createElement('div');
-  contentDiv.className = 'message-content';
-  contentDiv.textContent = content;
-  
-  messageDiv.appendChild(contentDiv);
-  conversationHistory.appendChild(messageDiv);
-  conversationHistory.scrollTop = conversationHistory.scrollHeight;
+  // Update the AI status text for AI messages
+  if (type === 'ai') {
+    const statusText = document.getElementById('statusText');
+    if (statusText) {
+      statusText.textContent = content;
+    }
+  }
 }
 
 // Add startConversation function
@@ -372,6 +383,11 @@ async function stopListening() {
 }
 
 async function handleUserInput(input) {
+  if (!input) return;
+
+  // Add the input to userResponses array
+  userResponses.push(input);
+
   // Analyze input for required info
   if (input.toLowerCase().includes('goal') || input.toLowerCase().includes('want') || 
       input.toLowerCase().includes('need') || input.toLowerCase().includes('like')) {
@@ -386,9 +402,7 @@ async function handleUserInput(input) {
     requiredInfo.lifestyle = true;
   }
 
-  userResponses.push(input);
-  
-  // Ensure minimum 3 questions before generating plan
+  // Check if we have enough information
   if (userResponses.length >= 3 && Object.values(requiredInfo).filter(v => v).length >= 2) {
     conversationComplete = true;
     await speak("Perfect! I have enough information now. Let me create your personalized diet plan.");
