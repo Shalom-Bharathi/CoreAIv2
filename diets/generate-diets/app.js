@@ -77,7 +77,98 @@ async function checkExistingDiet() {
   }
 }
 
-// Add this function before initializeDietGeneration
+// Add these helper functions at the top after Firebase initialization
+async function playAnimation(type) {
+  const avatarContainer = document.querySelector('.ai-avatar-container');
+  
+  switch(type) {
+    case 'greeting':
+      avatarContainer.classList.add('greeting');
+      gsap.to(avatarContainer, {
+        scale: 1.1,
+        duration: 0.5,
+        yoyo: true,
+        repeat: 1,
+        ease: "elastic.out(1, 0.3)"
+      });
+      
+      const statusText = document.getElementById('statusText');
+      gsap.from(statusText, {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        ease: "back.out(1.7)"
+      });
+      break;
+      
+    case 'listening':
+      gsap.to(avatarContainer, {
+        scale: 1.05,
+        duration: 0.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+      break;
+      
+    case 'thinking':
+      gsap.to(avatarContainer, {
+        rotation: 3,
+        duration: 1,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+      break;
+  }
+  
+  return new Promise(resolve => setTimeout(resolve, 1000));
+}
+
+// Add the speak function
+async function speak(text) {
+  return new Promise((resolve, reject) => {
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.2;
+      utterance.pitch = 1.2;
+      utterance.volume = 1;
+      
+      const voices = speechSynthesis.getVoices();
+      const femaleVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('female') || 
+        voice.name.includes('Samantha')
+      );
+      if (femaleVoice) utterance.voice = femaleVoice;
+      
+      utterance.onend = resolve;
+      utterance.onerror = reject;
+      speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Browser speech synthesis failed:', error);
+      resolve(); // Resolve anyway to continue the flow
+    }
+  });
+}
+
+// Add message to conversation function
+function addMessageToConversation(type, content) {
+  const conversationHistory = document.getElementById('conversationHistory');
+  if (!conversationHistory) return;
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${type}`;
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  contentDiv.textContent = content;
+  
+  messageDiv.appendChild(contentDiv);
+  conversationHistory.appendChild(messageDiv);
+  conversationHistory.scrollTop = conversationHistory.scrollHeight;
+}
+
+// Add startConversation function
 async function startConversation() {
   await playAnimation('greeting');
   
@@ -85,6 +176,39 @@ async function startConversation() {
     const welcomeMessage = "Hi! I'm Core AI. Let's have a chat about your diet goals. Feel free to tell me about what brings you here today.";
     await speak(welcomeMessage);
     addMessageToConversation('ai', welcomeMessage);
+  }
+}
+
+// Update handleTextSubmit function
+async function handleTextSubmit() {
+  const textInput = document.getElementById('textInput');
+  const text = textInput.value.trim();
+  
+  if (text) {
+    addMessageToConversation('user', text);
+    textInput.value = '';
+    await handleUserInput(text);
+  }
+}
+
+// Add these functions before initializeDietGeneration
+function updateUIForListening(listening) {
+  const statusIndicator = document.querySelector('.status-indicator');
+  const statusText = document.getElementById('statusText');
+  
+  if (listening) {
+    statusIndicator.classList.add('listening');
+    statusText.textContent = "I'm listening...";
+  } else {
+    statusIndicator.classList.remove('listening');
+    statusText.textContent = "Ready to continue";
+  }
+}
+
+function updateStatus(text) {
+  const statusText = document.getElementById('statusText');
+  if (statusText) {
+    statusText.textContent = text;
   }
 }
 
@@ -336,126 +460,6 @@ function checkRequiredInfo() {
   return Object.values(requiredInfo).every(value => value);
 }
 
-// Speech synthesis function
-async function speak(text) {
-  if (USE_ELEVEN_LABS && ELEVEN_LABS_KEY) {
-    try {
-      // Using Rachel voice - energetic and friendly female voice
-      const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
-      
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': ELEVEN_LABS_KEY
-        },
-        body: JSON.stringify({
-          text: text,
-          model_id: "eleven_monolingual_v1",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 1.0,
-            use_speaker_boost: true
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`ElevenLabs API request failed with status ${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      const audio = new Audio(URL.createObjectURL(audioBlob));
-      
-      return new Promise((resolve, reject) => {
-        audio.onended = () => {
-          URL.revokeObjectURL(audio.src); // Clean up
-          resolve();
-        };
-        
-        audio.onerror = (error) => {
-          URL.revokeObjectURL(audio.src); // Clean up
-          reject(error);
-        };
-
-        audio.play();
-      });
-
-    } catch (error) {
-      console.error('ElevenLabs error, falling back to browser speech:', error);
-      return useBrowserSpeech(text);
-    }
-  } else {
-    return useBrowserSpeech(text);
-  }
-}
-
-// Helper function for browser speech
-async function useBrowserSpeech(text) {
-  return new Promise((resolve, reject) => {
-    try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.2;
-      utterance.pitch = 1.2;
-      utterance.volume = 1;
-      
-      // Try to use a female voice
-      const voices = speechSynthesis.getVoices();
-      const femaleVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('female') || 
-        voice.name.includes('Samantha')
-      );
-      if (femaleVoice) utterance.voice = femaleVoice;
-      
-      utterance.onend = resolve;
-      utterance.onerror = reject;
-      speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error('Browser speech synthesis failed:', error);
-      reject(error);
-    }
-  });
-}
-
-function updateUIForListening(listening) {
-  const statusIndicator = document.querySelector('.status-indicator');
-  
-  if (listening) {
-    statusIndicator.classList.add('listening');
-    updateStatus("I'm listening...");
-  } else {
-    statusIndicator.classList.remove('listening');
-  }
-}
-
-// Update the status indicator animation for speech
-function updateStatus(text, isSpeaking = false) {
-  const statusText = document.getElementById('statusText');
-  const statusIndicator = document.querySelector('.status-indicator');
-  
-  statusText.textContent = text;
-  
-  if (isSpeaking) {
-    // Add speaking animation to the status indicator with rotation
-    gsap.to(statusIndicator, {
-      scale: 1.2,
-      rotation: 360,
-      duration: 2,
-      repeat: -1,
-      ease: "none"  // Use "none" for constant rotation speed
-    });
-  } else {
-    // Reset animation
-    gsap.to(statusIndicator, {
-      scale: 1,
-      rotation: 0,
-      duration: 0.3
-    });
-  }
-}
-
 // Function to show loading popup
 function showLoadingPopup(message) {
   const popup = document.createElement('div');
@@ -683,141 +687,6 @@ function downloadDietPlan() {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
-
-// Add this function after initializeDietGeneration
-async function playAnimation(type) {
-  const avatarContainer = document.querySelector('.ai-avatar-container');
-  
-  switch(type) {
-    case 'greeting':
-      // Add greeting animation class
-      avatarContainer.classList.add('greeting');
-      // Play greeting animation
-      gsap.to(avatarContainer, {
-        scale: 1.1,
-        duration: 0.5,
-        yoyo: true,
-        repeat: 1,
-        ease: "elastic.out(1, 0.3)"
-      });
-      
-      // Add welcome text animation
-      const statusText = document.getElementById('statusText');
-      gsap.from(statusText, {
-        y: 20,
-        opacity: 0,
-        duration: 0.5,
-        ease: "back.out(1.7)"
-      });
-      
-      break;
-      
-    case 'listening':
-      // Add pulse animation
-      gsap.to(avatarContainer, {
-        scale: 1.05,
-        duration: 0.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-      break;
-      
-    case 'thinking':
-      // Add thinking animation
-      gsap.to(avatarContainer, {
-        rotation: 3,
-        duration: 1,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-      break;
-      
-    case 'speaking':
-      // Add speaking animation
-      gsap.to(avatarContainer, {
-        y: -5,
-        duration: 0.3,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-      break;
-  }
-  
-  // Return a promise that resolves after animation
-  return new Promise(resolve => setTimeout(resolve, 1000));
-}
-
-// Add this new function to handle text input
-async function handleTextSubmit() {
-  const textInput = document.getElementById('textInput');
-  const text = textInput.value.trim();
-  
-  if (text) {
-    // Add user message to conversation
-    addMessageToConversation('user', text);
-    
-    // Clear input
-    textInput.value = '';
-    
-    // Process the text input
-    await handleUserInput(text);
-  }
-}
-
-// Update addMessageToConversation to only show user messages
-function addMessageToConversation(type, content) {
-  if (type === 'user') { // Only add user messages to the conversation history
-    const conversationHistory = document.getElementById('conversationHistory');
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}`;
-    
-    const avatarDiv = document.createElement('div');
-    avatarDiv.className = 'message-avatar';
-    
-    avatarDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-      <circle cx="12" cy="7" r="4"></circle>
-    </svg>`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.textContent = content;
-    
-    messageDiv.appendChild(avatarDiv);
-    messageDiv.appendChild(contentDiv);
-    
-    conversationHistory.appendChild(messageDiv);
-    conversationHistory.scrollTop = conversationHistory.scrollHeight;
-  }
-}
-
-// Update initialization to wait for API key
-document.addEventListener('DOMContentLoaded', () => {
-  // Check if user already has a diet plan
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      const doc = await db.collection('dietPlans').doc(user.uid).get();
-      if (doc.exists) {
-        // User has a diet plan, redirect to dashboard
-        window.location.replace('../diet-home/index.html');
-        return;
-      }
-      // If no diet plan exists, initialize the diet generation
-      initializeDietGeneration();
-    }
-  });
-
-  // Update navigation links
-  const dashboardLink = document.querySelector('a[href="#"].nav-link:not(.active)');
-  dashboardLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.href = '../diet-home/index.html';
-  });
-});
 
 // Add favicon link to prevent 404
 const link = document.createElement('link');
