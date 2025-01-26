@@ -10,7 +10,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -21,17 +24,22 @@ class DietDashboard {
     }
 
     async init() {
-        // Wait for auth state to be ready
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                console.log('User authenticated:', user.uid);
-                this.userId = user.uid;
-                this.loadDietPlan();
-            } else {
-                console.log('No user authenticated, redirecting to login');
-                window.location.href = '../auth/login.html';
-            }
-        });
+        try {
+            // Wait for auth state to be ready
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('User authenticated:', user.uid);
+                    this.userId = user.uid;
+                    this.loadDietPlan();
+                } else {
+                    console.log('No user authenticated, redirecting to login');
+                    window.location.href = '../auth/login.html';
+                }
+            });
+        } catch (error) {
+            console.error('Error in init:', error);
+            this.showError('Failed to initialize dashboard. Please try again.');
+        }
     }
 
     async loadDietPlan() {
