@@ -578,7 +578,7 @@ async function generateDietPlan() {
 
     // Parse the generated diet plan
     const generatedDietPlan = JSON.parse(data.choices[0].message.content);
-    
+    print(generatedDietPlan)
     // Add user responses and timestamp
     generatedDietPlan.user_responses = state.userResponses;
     generatedDietPlan.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -590,7 +590,7 @@ async function generateDietPlan() {
     loadingPopup.remove();
     
     // Show success and redirect
-    showSuccessAndRedirect();
+    // showSuccessAndRedirect();
   } catch (error) {
     console.error('Error generating/saving diet plan:', error);
     loadingPopup.remove();
