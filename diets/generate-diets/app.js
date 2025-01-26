@@ -13,52 +13,16 @@ if (!firebase.apps.length) {
 
   firebase.initializeApp(firebaseConfig);
 }
+
+console.log("Firebase initialized");
+
+// Initialize Firebase services
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-// API Keys and configuration
-let API_KEY;
-let thingsRefx;
-let unsubscribex;
-
-thingsRefx = db.collection('API');
-
-// Wait for API key to be loaded before allowing interactions
-unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
-  querySnapshot.docs.forEach(doc => {
-    API_KEY = doc.data().API;
-    console.log("OpenAI API Key loaded");
-    // Initialize after API key is loaded
-    if (!document.querySelector('.diet-experience-container')) {
-      initializeDietGeneration();
-    }
-  });
-});
-
-const OPENAI_API_KEY = API_KEY;
-
-// Voice configuration
-const USE_ELEVEN_LABS = false; // Set to true to use ElevenLabs, false for browser speech
-let ELEVEN_LABS_KEY;
-
-// Get ElevenLabs API Key if needed
-if (USE_ELEVEN_LABS) {
-  db.collection('11LabsAPI').onSnapshot(querySnapshot => {
-    querySnapshot.docs.forEach(doc => {
-      ELEVEN_LABS_KEY = doc.data().API;
-      console.log("ElevenLabs credentials loaded");
-    });
-  });
-}
-
-// Questions and state variables
-const questions = [
-  "Tell me about your fitness journey and what motivates you to make a change in your diet?",
-  "Paint me a picture of your typical day - from morning to night. What does your eating schedule look like?",
-  "What's your relationship with food? Any comfort foods or dishes that bring back memories?",
-  "If you could wave a magic wand and achieve your ideal health, what would that look like?"
-];
-
-let currentQuestionIndex = 0;
+// Global variables for diet generation
+let currentUser = null;
+let API_KEY = null;
 let userResponses = [];
 let isListening = false;
 let conversationComplete = false;
@@ -67,17 +31,43 @@ let requiredInfo = {
   dietary: false,
   lifestyle: false
 };
-
-// Add this variable at the top with other state variables
 let hasUserInteracted = false;
 
-// Add this function at the beginning of the file, after Firebase initialization
-async function checkExistingDiet() {
-  if (!firebase.auth().currentUser) return;
+// Questions for diet generation
+const questions = [
+  "Tell me about your fitness journey and what motivates you to make a change in your diet?",
+  "Paint me a picture of your typical day - from morning to night. What does your eating schedule look like?",
+  "What's your relationship with food? Any comfort foods or dishes that bring back memories?",
+  "If you could wave a magic wand and achieve your ideal health, what would that look like?"
+];
 
+let currentQuestionIndex = 0;
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check authentication and redirect if needed
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      await checkExistingDiet();
+      initializeDietGeneration();
+    } else {
+      window.location.href = '../auth/login.html';
+    }
+  });
+
+  // Get API Key from Firebase
+  const apiSnapshot = await db.collection('API').get();
+  apiSnapshot.forEach(doc => {
+    API_KEY = doc.data().API;
+  });
+});
+
+// Check if user already has a diet plan
+async function checkExistingDiet() {
   try {
     const dietSnapshot = await db.collection('diets')
-      .where('userId', '==', firebase.auth().currentUser.uid)
+      .where('userId', '==', currentUser.uid)
       .orderBy('createdAt', 'desc')
       .limit(1)
       .get();
@@ -90,23 +80,10 @@ async function checkExistingDiet() {
   }
 }
 
-// Modify the existing initializeApp function
-async function initializeApp() {
-  // Existing Firebase initialization code...
-
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      await checkExistingDiet(); // Add this line
-      // Rest of the existing code...
-    } else {
-      window.location.href = '../auth/login.html';
-    }
-  });
-}
-
 function initializeDietGeneration() {
   const mainContent = document.querySelector('.main-content');
+  if (!mainContent) return;
+
   mainContent.innerHTML = `
     <div class="diet-experience-container">
       <div class="experience-stage">
@@ -122,12 +99,11 @@ function initializeDietGeneration() {
             ></lottie-player>
           </div>
           <div class="ai-status">
-            <div class="status-indicator" style="background-color: #007bff;"></div>
-            <span id="statusText" class="status-text">Ready to start your diet journey</span>
+            <div class="status-indicator"></div>
+            <span id="statusText">Ready to start your diet journey</span>
           </div>
         </div>
         
-        <!-- Add start button -->
         <button id="startButton" class="start-button">
           <span>Start Your Diet Journey</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -136,7 +112,6 @@ function initializeDietGeneration() {
           </svg>
         </button>
 
-        <!-- Hide interaction area initially -->
         <div class="interaction-area" style="display: none;">
           <div class="input-methods">
             <button id="micButton" class="mic-button">
@@ -149,8 +124,8 @@ function initializeDietGeneration() {
             </button>
             
             <div class="text-input-container">
-              <input type="text" class="text-input" placeholder="Type your message here..." id="textInput">
-              <button class="send-button" id="sendButton">
+              <input type="text" id="textInput" placeholder="Type your message here...">
+              <button id="sendButton">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -159,9 +134,7 @@ function initializeDietGeneration() {
             </div>
           </div>
 
-          <div class="conversation-history" id="conversationHistory">
-            <!-- Only user messages will appear here -->
-          </div>
+          <div id="conversationHistory" class="conversation-history"></div>
         </div>
       </div>
       
@@ -176,53 +149,52 @@ function initializeDietGeneration() {
     </div>
   `;
 
+  // Initialize event listeners
+  initializeEventListeners();
+  startConversation();
+}
+
+// Initialize event listeners for the diet generation interface
+function initializeEventListeners() {
   const startButton = document.getElementById('startButton');
   const interactionArea = document.querySelector('.interaction-area');
   const micButton = document.getElementById('micButton');
   const textInput = document.getElementById('textInput');
   const sendButton = document.getElementById('sendButton');
-  
-  // Start button click handler
-  startButton.addEventListener('click', async () => {
+
+  startButton.addEventListener('click', () => {
     hasUserInteracted = true;
     startButton.style.display = 'none';
     interactionArea.style.display = 'flex';
-    await startConversation();
+    startConversation();
   });
 
-  // Setup mic button for press-and-hold
-  micButton.addEventListener('mousedown', () => {
-    hasUserInteracted = true;
-    startListening();
-  });
+  micButton.addEventListener('mousedown', startListening);
   micButton.addEventListener('mouseup', stopListening);
   micButton.addEventListener('mouseleave', stopListening);
 
-  // Setup text input handling
   textInput.addEventListener('keypress', (e) => {
-    hasUserInteracted = true;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleTextSubmit();
     }
   });
 
-  sendButton.addEventListener('click', () => {
-    hasUserInteracted = true;
-    handleTextSubmit();
-  });
-
-  // Don't automatically start conversation, wait for user interaction
-  addMessageToConversation('ai', "Hi! I'm your AI nutritionist. Let's create a personalized diet plan together. You can either speak by holding the microphone button or type your messages below.");
+  sendButton.addEventListener('click', handleTextSubmit);
 }
 
-async function startConversation() {
-  await playAnimation('greeting');
-  
-  if (hasUserInteracted) {
-    const welcomeMessage = "Hi! I'm Core AI. Let's have a chat about your diet goals. Feel free to tell me about what brings you here today.";
-    await speak(welcomeMessage);
-  }
+// Voice configuration
+const USE_ELEVEN_LABS = false; // Set to true to use ElevenLabs, false for browser speech
+let ELEVEN_LABS_KEY;
+
+// Get ElevenLabs API Key if needed
+if (USE_ELEVEN_LABS) {
+  db.collection('11LabsAPI').onSnapshot(querySnapshot => {
+    querySnapshot.docs.forEach(doc => {
+      ELEVEN_LABS_KEY = doc.data().API;
+      console.log("ElevenLabs credentials loaded");
+    });
+  });
 }
 
 let mediaRecorder = null;
@@ -634,7 +606,7 @@ async function processAudioResponse(audioBlob) {
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
         file: base64Audio,
