@@ -1,17 +1,7 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { 
-    getFirestore, 
-    doc, 
-    getDoc,
-    connectFirestoreEmulator
-} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
-import { firebaseConfig } from './firebase-config.js';
-
 class DietDashboard {
     constructor() {
         this.initializeFirebase();
     }
-
     async initializeFirebase() {
         try {
             // Initialize Firebase
@@ -43,7 +33,7 @@ class DietDashboard {
             const userId = 'testUser123';
             console.log('Fetching diet plan for user:', userId);
             
-            const dietDocRef = doc(this.db, 'dietPlans', userId);
+            const dietDocRef = doc(this.db, 'diets', userId);
             const dietDoc = await getDoc(dietDocRef);
             
             if (dietDoc.exists()) {

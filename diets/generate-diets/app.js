@@ -1,19 +1,3 @@
-// Initialize Firebase if not already initialized
-if (!firebase.apps.length) {
-  const firebaseConfig = {
-    apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
-    authDomain: "coreai-82c79.firebaseapp.com",
-    databaseURL: "https://coreai-82c79-default-rtdb.firebaseio.com",
-    projectId: "coreai-82c79",
-    storageBucket: "coreai-82c79.firebasestorage.app",
-    messagingSenderId: "97395011364",
-    appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
-    measurementId: "G-0J1RLMVEGC"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-}
-
 // Initialize state variables
 const state = {
   currentQuestionIndex: 0,
@@ -517,86 +501,114 @@ async function generateDietPlan() {
   const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
   
   try {
-    // Basic diet template following the specified JSON format
-    const dietPlan = {
-      user_id: userId,
-      diet_details: {
-        diet_type: "Balanced",
-        calories_per_day: 2000,
-        macronutrient_split: {
-          carbohydrates: {
-            percentage: 50,
-            source_examples: ["Whole grains", "Vegetables", "Fruits"]
+    // Generate diet plan using OpenAI
+    const prompt = `
+      Based on the following user responses about their diet and lifestyle:
+      ${state.userResponses.map((response, i) => `Response ${i + 1}: ${response}`).join('\n')}
+      
+      Generate a comprehensive diet plan following this exact JSON structure:
+      {
+        "user_id": "string",
+        "diet_details": {
+          "diet_type": "string",
+          "calories_per_day": number,
+          "macronutrient_split": {
+            "carbohydrates": {
+              "percentage": number,
+              "source_examples": ["string"]
+            },
+            "proteins": {
+              "percentage": number,
+              "source_examples": ["string"]
+            },
+            "fats": {
+              "percentage": number,
+              "source_examples": ["string"]
+            }
           },
-          proteins: {
-            percentage: 30,
-            source_examples: ["Lean meat", "Legumes", "Eggs"]
+          "micronutrients": {
+            "vitamins": {
+              "A": "string",
+              "C": "string",
+              "D": "string"
+            },
+            "minerals": {
+              "calcium": "string",
+              "iron": "string",
+              "potassium": "string"
+            }
           },
-          fats: {
-            percentage: 20,
-            source_examples: ["Avocado", "Nuts", "Olive oil"]
+          "hydration_recommendation": {
+            "daily_intake": "string",
+            "reminders": boolean,
+            "tips": ["string"]
+          },
+          "meal_timing": {
+            "breakfast": "string",
+            "lunch": "string",
+            "dinner": "string",
+            "snack_windows": ["string"],
+            "fasting_window": "string"
+          },
+          "additional_guidelines": {
+            "dos": ["string"],
+            "donts": ["string"],
+            "special_tips": ["string"]
+          },
+          "diet_goal": "string",
+          "expected_outcomes": {
+            "energy_boost": boolean,
+            "improved_digestion": boolean,
+            "stable_blood_sugar": boolean,
+            "healthy weight management": boolean
+          },
+          "physical_activity": {
+            "recommendation": "string",
+            "suggested_activities": ["string"]
           }
-        },
-        micronutrients: {
-          vitamins: {
-            A: "700-900 mcg/day",
-            C: "75-90 mg/day",
-            D: "15-20 mcg/day"
-          },
-          minerals: {
-            calcium: "1000 mg/day",
-            iron: "8-18 mg/day",
-            potassium: "2600-3400 mg/day"
-          }
-        },
-        hydration_recommendation: {
-          daily_intake: "2.5 liters/day",
-          reminders: true,
-          tips: ["Drink water 30 minutes before meals", "Carry a reusable water bottle"]
-        },
-        meal_timing: {
-          breakfast: "7:00 AM - 8:00 AM",
-          lunch: "12:00 PM - 1:00 PM",
-          dinner: "7:00 PM - 8:00 PM",
-          snack_windows: ["10:00 AM - 11:00 AM", "4:00 PM - 5:00 PM"],
-          fasting_window: "8:00 PM - 7:00 AM"
-        },
-        additional_guidelines: {
-          dos: [
-            "Include a variety of vegetables in meals",
-            "Choose whole foods over processed foods",
-            "Consume small, frequent meals to maintain energy levels",
-            "Incorporate healthy snacks like nuts and seeds"
-          ],
-          donts: [
-            "Avoid sugary beverages and snacks",
-            "Limit fried and high-fat foods",
-            "Reduce salt intake to less than 5g per day",
-            "Do not skip meals, especially breakfast"
-          ],
-          special_tips: [
-            "Eat mindfully and chew thoroughly",
-            "Monitor portion sizes with your hand or a plate guide",
-            "Plan meals ahead to avoid unhealthy choices"
-          ]
-        },
-        diet_goal: "Weight Maintenance",
-        expected_outcomes: {
-          energy_boost: true,
-          improved_digestion: true,
-          stable_blood_sugar: true,
-          "healthy weight management": true
-        },
-        physical_activity: {
-          recommendation: "30 minutes of moderate exercise, 5 times a week",
-          suggested_activities: ["Brisk walking", "Cycling", "Yoga"]
         }
-      },
-      user_responses: state.userResponses // Include user responses in the saved data
-    };
+      }
 
+      Make sure the diet plan is personalized based on their responses and follows best nutritional practices.
+      Return ONLY the JSON object, no additional text.
+    `;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from OpenAI API');
+    }
+
+    // Parse the generated diet plan
+    const generatedDietPlan = JSON.parse(data.choices[0].message.content);
+    
+    // Add user ID and responses
+    generatedDietPlan.user_id = userId;
+    generatedDietPlan.user_responses = state.userResponses;
+
+    // Save to Firebase
     await db.collection('diets').add({
-      ...dietPlan,
+      ...generatedDietPlan,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
@@ -606,9 +618,9 @@ async function generateDietPlan() {
     // Show success and redirect
     showSuccessAndRedirect();
   } catch (error) {
-    console.error('Error saving diet plan:', error);
+    console.error('Error generating/saving diet plan:', error);
     loadingPopup.remove();
-    showError('Failed to save diet plan. Please try again.');
+    showError('Failed to generate diet plan. Please try again.');
   }
 }
 
@@ -870,7 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if user already has a diet plan
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
-      const doc = await db.collection('dietPlans').doc(user.uid).get();
+      const doc = await db.collection('diets').doc(user.uid).get();
       if (doc.exists) {
         // User has a diet plan, redirect to dashboard
         window.location.replace('../diet-home/index.html');

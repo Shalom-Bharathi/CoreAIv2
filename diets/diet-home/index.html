@@ -10,8 +10,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
   
-  <!-- Firebase Config -->
-  <script src="./firebase-config.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBHMmzqD6XT3fzdA9EHsR-GVkbFf1yeSQU",
+          authDomain: "studyspace-22ebd.firebaseapp.com",
+          projectId: "studyspace-22ebd",
+          storageBucket: "studyspace-22ebd.firebasestorage.app",
+          messagingSenderId: "533652320021",
+          appId: "1:533652320021:web:2cfdcb01d7947d8023031c",
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
   
   <!-- Other libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
