@@ -12,8 +12,8 @@ class DietDashboard {
 
           if (!snapshot.empty) {
               const dietPlan = snapshot.docs[0].data();
-              console.log('Diet plan found:', dietPlan);
-              this.renderDietPlan(dietPlan.diet_details);
+              console.log('Raw diet plan data:', dietPlan); // Debug log
+              this.renderDietPlan(dietPlan);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
@@ -33,50 +33,75 @@ class DietDashboard {
       document.querySelector('.diet-container').prepend(errorDiv);
   }
 
-  renderDietPlan(dietPlan) {
+  renderDietPlan(data) {
       try {
-        console.log(dietPlan);
-          // Update diet type and goal
-          document.querySelector('.diet-type').textContent = `${dietPlan.diet_type} - ${dietPlan.diet_goal}`;
+          console.log('Rendering diet plan:', data); // Debug log
+          const dietPlan = data.diet_details || data; // Handle potential nesting
 
-          // Update overview cards
-          document.querySelector('.calories-value').textContent = `${dietPlan.calories_per_day} kcal`;
-          
-          // Update hydration (with the correct data structure)
-          const hydrationValue = document.querySelector('.hydration-value');
-          if (hydrationValue && dietPlan.hydration_recommendation) {
-              hydrationValue.textContent = dietPlan.hydration_recommendation.daily_intake || '2-3 liters';
+          // Update diet type and goal
+          const dietTypeElement = document.querySelector('.diet-type');
+          if (dietTypeElement) {
+              dietTypeElement.textContent = `${dietPlan.diet_type || 'Custom Diet'} - ${dietPlan.diet_goal || 'Balanced Nutrition'}`;
           }
 
-          // Update macro rings
-          const macroRings = document.querySelectorAll('.macro-ring');
-          macroRings.forEach(ring => {
-              const macroType = ring.getAttribute('data-macro');
-              const percentage = dietPlan.macronutrient_split[macroType]?.percentage || 0;
-              ring.style.setProperty('--percentage', `${percentage}%`);
-              const percentageElement = ring.querySelector('.percentage');
-              if (percentageElement) {
-                  percentageElement.textContent = `${percentage}%`;
+          // Update overview cards
+          const caloriesElement = document.querySelector('.calories-value');
+          if (caloriesElement) {
+              caloriesElement.textContent = `${dietPlan.calories_per_day || 2000} kcal`;
+          }
+          
+          // Update hydration with fallback values
+          const hydrationElement = document.querySelector('.hydration-value');
+          if (hydrationElement) {
+              let hydrationValue = '2-3 liters'; // Default value
+              if (dietPlan.hydration_recommendation) {
+                  hydrationValue = dietPlan.hydration_recommendation.daily_water || 
+                                 dietPlan.hydration_recommendation.daily_intake || 
+                                 '2-3 liters';
               }
-          });
+              hydrationElement.textContent = hydrationValue;
+          }
+
+          // Update macro rings with safe access
+          const macroRings = document.querySelectorAll('.macro-ring');
+          if (dietPlan.macronutrient_split) {
+              macroRings.forEach(ring => {
+                  const macroType = ring.getAttribute('data-macro');
+                  console.log('Processing macro type:', macroType); // Debug log
+                  console.log('Macro split data:', dietPlan.macronutrient_split); // Debug log
+                  
+                  let percentage = 0;
+                  if (dietPlan.macronutrient_split[macroType]) {
+                      percentage = dietPlan.macronutrient_split[macroType].percentage || 0;
+                  }
+                  
+                  ring.style.setProperty('--percentage', `${percentage}%`);
+                  const percentageElement = ring.querySelector('.percentage');
+                  if (percentageElement) {
+                      percentageElement.textContent = `${percentage}%`;
+                  }
+              });
+          }
 
           // Update meal timeline
           const timelineContainer = document.querySelector('.meal-timeline');
-          const mealTimings = Object.entries(dietPlan.meal_timing)
-              .filter(([key]) => !['snack_windows', 'fasting_window'].includes(key))
-              .map(([meal, time]) => ({
-                  meal: meal.charAt(0).toUpperCase() + meal.slice(1),
-                  time: time
-              }));
+          if (timelineContainer && dietPlan.meal_timing) {
+              const mealTimings = Object.entries(dietPlan.meal_timing)
+                  .filter(([key]) => !['snack_windows', 'fasting_window'].includes(key))
+                  .map(([meal, time]) => ({
+                      meal: meal.charAt(0).toUpperCase() + meal.slice(1),
+                      time: time
+                  }));
 
-          timelineContainer.innerHTML = mealTimings.map(meal => `
-              <div class="meal-time">
-                  <div class="meal-time-content">
-                      <strong>${meal.time}</strong>
-                      <span>${meal.meal}</span>
+              timelineContainer.innerHTML = mealTimings.map(meal => `
+                  <div class="meal-time">
+                      <div class="meal-time-content">
+                          <strong>${meal.time}</strong>
+                          <span>${meal.meal}</span>
+                      </div>
                   </div>
-              </div>
-          `).join('');
+              `).join('');
+          }
 
           // Update guidelines
           const dosContainer = document.querySelector('.dos-list');
@@ -162,7 +187,7 @@ class DietDashboard {
 
       } catch (error) {
           console.error('Error rendering diet plan:', error);
-          console.log('Diet plan data:', dietPlan);
+          console.log('Problematic diet plan data:', JSON.stringify(data, null, 2));
           this.showError('Error displaying diet plan information.');
       }
   }
