@@ -6,16 +6,9 @@ class DietDashboard {
 
     async loadDietPlan() {
         try {
-            // Get the diet ID from localStorage
-            const dietId = localStorage.getItem('currentDietId');
-            if (!dietId) {
-                this.showError('No diet plan found. Please generate a diet plan first.');
-                return;
-            }
-
-            console.log('Fetching diet plan with ID:', dietId);
+            console.log('Fetching current diet plan...');
             
-            const dietDoc = await this.db.collection('diets').doc(dietId).get();
+            const dietDoc = await this.db.collection('diets').doc('current_diet').get();
             
             if (dietDoc.exists) {
                 const data = dietDoc.data();
@@ -23,6 +16,9 @@ class DietDashboard {
                 this.renderDietPlan(data);
             } else {
                 this.showError('No diet plan found. Please generate a diet plan first.');
+                setTimeout(() => {
+                    window.location.href = '../generate-diets/index.html';
+                }, 3000);
             }
         } catch (error) {
             console.error('Error loading diet plan:', error);
