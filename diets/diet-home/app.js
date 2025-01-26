@@ -11,12 +11,10 @@ class DietDashboard {
               .get();
 
           if (!snapshot.empty) {
-              const dietPlan = snapshot.docs[0].data();
-              console.log('Raw diet plan data:', dietPlan); // Debug log
-              console.log('Raw diet plan data2:', dietPlan.diet_details); // Debug log
-              console.log('Raw diet plan data3:', dietPlan[diet_details]); // Debug log
-              console.log('Raw diet plan data4:', dietPlan['diet_details']); // Debug log
-              this.renderDietPlan(dietPlan);
+              const dietPlanz = snapshot.docs[0].data();
+              console.log('Raw diet plan data:', dietPlanz); // Debug log
+              console.log('Raw diet plan data2:', dietPlanz.diet_details); // Debug log
+              this.renderDietPlan(dietPlanz.diet_details);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
