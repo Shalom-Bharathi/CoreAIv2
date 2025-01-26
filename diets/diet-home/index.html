@@ -48,151 +48,132 @@
         <header class="dashboard-header">
           <div class="header-content">
             <h1>Your Diet Dashboard</h1>
-            <p class="subtitle">Track your progress and stay on course</p>
-          </div>
-          <div class="header-actions">
-            <button class="button-primary" id="logMealBtn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-              Log Meal
-            </button>
+            <p class="subtitle">Track your nutrition and plan your meals</p>
           </div>
         </header>
 
-        <!-- Stats Grid -->
+        <!-- Nutrition Overview Grid -->
         <div class="stats-grid">
+          <!-- Daily Target -->
           <div class="stat-card">
             <div class="stat-header">
-              <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
-                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-                  <line x1="6" y1="1" x2="6" y2="4"/>
-                  <line x1="10" y1="1" x2="10" y2="4"/>
-                  <line x1="14" y1="1" x2="14" y2="4"/>
-                </svg>
-              </div>
-              <span class="stat-change positive">+2.5%</span>
+              <h3>Daily Target</h3>
             </div>
-            <h3>Daily Calories</h3>
-            <div class="stat-value" id="dailyCalories">0/2000</div>
+            <div class="stat-content">
+              <div class="stat-value" id="dailyTarget">2000 kcal</div>
+              <div class="stat-description">Recommended daily intake</div>
+            </div>
           </div>
 
+          <!-- Protein -->
           <div class="stat-card">
             <div class="stat-header">
-              <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20v-6M6 20V10M18 20V4"/>
-                </svg>
-              </div>
-              <span class="stat-change positive">On Track</span>
+              <h3>Protein</h3>
             </div>
-            <h3>Meals Logged</h3>
-            <div class="stat-value" id="mealsLogged">0</div>
+            <div class="stat-content">
+              <div class="stat-value" id="proteinTarget">150g</div>
+              <div class="stat-description">30% of daily calories</div>
+            </div>
           </div>
 
+          <!-- Carbs -->
           <div class="stat-card">
             <div class="stat-header">
-              <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </div>
-              <span class="stat-change">Today</span>
+              <h3>Carbohydrates</h3>
             </div>
-            <h3>Next Meal</h3>
-            <div class="stat-value" id="nextMeal">--:--</div>
+            <div class="stat-content">
+              <div class="stat-value" id="carbTarget">250g</div>
+              <div class="stat-description">50% of daily calories</div>
+            </div>
           </div>
 
+          <!-- Fats -->
           <div class="stat-card">
             <div class="stat-header">
-              <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-              </div>
-              <span class="stat-change positive">Good</span>
+              <h3>Fats</h3>
             </div>
-            <h3>Diet Adherence</h3>
-            <div class="stat-value" id="dietAdherence">95%</div>
+            <div class="stat-content">
+              <div class="stat-value" id="fatTarget">45g</div>
+              <div class="stat-description">20% of daily calories</div>
+            </div>
           </div>
         </div>
 
         <!-- Charts Grid -->
         <div class="charts-grid">
+          <!-- Macros Distribution -->
           <div class="chart-card">
             <div class="chart-header">
-              <h3>Nutrition Overview</h3>
-              <div class="chart-actions">
-                <button class="chart-button active">Week</button>
-                <button class="chart-button">Month</button>
-              </div>
-            </div>
-            <div class="chart-container">
-              <canvas id="nutritionChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>Macronutrients</h3>
+              <h3>Macronutrient Distribution</h3>
             </div>
             <div class="chart-container">
               <canvas id="macrosChart"></canvas>
             </div>
           </div>
-        </div>
 
-        <!-- Diet Plan and Meal Logging Section -->
-        <div class="charts-grid secondary">
+          <!-- Food Composition -->
           <div class="chart-card">
             <div class="chart-header">
-              <h3>Your Diet Plan</h3>
-              <button class="button-primary" id="viewFullPlanBtn">View Full Plan</button>
+              <h3>Food Composition</h3>
             </div>
-            <div class="diet-plan-preview" id="dietPlanPreview">
-              Loading your personalized diet plan...
+            <div class="chart-container">
+              <canvas id="foodCompositionChart"></canvas>
             </div>
           </div>
+        </div>
 
-          <div class="chart-card">
-            <div class="chart-header">
+        <!-- Diet Guidelines -->
+        <div class="guidelines-grid">
+          <div class="guideline-card">
+            <div class="guideline-header">
+              <h3>Recommended Foods</h3>
+            </div>
+            <div class="guideline-content" id="recommendedFoods"></div>
+          </div>
+
+          <div class="guideline-card">
+            <div class="guideline-header">
+              <h3>Foods to Avoid</h3>
+            </div>
+            <div class="guideline-content" id="foodsToAvoid"></div>
+          </div>
+        </div>
+
+        <!-- Meal Analysis -->
+        <div class="analysis-section">
+          <div class="analysis-card">
+            <div class="analysis-header">
               <h3>Meal Analysis</h3>
             </div>
-            <div class="meal-analysis-container" id="mealAnalysis">
-              <div class="upload-section">
-                <div class="upload-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/>
-                    <line x1="16" y1="5" x2="22" y2="5"/>
-                    <line x1="19" y1="2" x2="19" y2="8"/>
-                    <circle cx="9" cy="9" r="2"/>
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                  </svg>
-                  <p>Upload or take a photo of your meal</p>
-                  <input type="file" id="mealPhotoInput" accept="image/*" capture="environment" hidden>
-                  <button class="button-primary" onclick="document.getElementById('mealPhotoInput').click()">
-                    Upload Photo
-                  </button>
-                </div>
-              </div>
+            <div class="analysis-content">
+              <p class="coming-soon">Coming soon...</p>
             </div>
           </div>
         </div>
 
-        <!-- Voice AI Section -->
-        <div class="charts-grid">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>Diet Assistant</h3>
+        <!-- Meal Planner -->
+        <div class="planner-section">
+          <div class="planner-card">
+            <div class="planner-header">
+              <h3>Generate Meal Plan</h3>
+              <button class="button-primary" id="generateMealBtn">Generate</button>
             </div>
-            <div class="voice-ai-container">
-              <div class="voice-ai-placeholder">
-                <p>Voice AI Coming Soon</p>
+            <div class="planner-form">
+              <div class="form-group">
+                <label for="cuisineType">Cuisine Type</label>
+                <select id="cuisineType">
+                  <option value="south-indian">South Indian</option>
+                  <option value="north-indian">North Indian</option>
+                  <option value="mediterranean">Mediterranean</option>
+                  <option value="asian">Asian</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ingredients">Available Ingredients</label>
+                <textarea id="ingredients" placeholder="Enter ingredients separated by commas..."></textarea>
               </div>
             </div>
+            <div class="planner-result" id="mealPlanResult"></div>
           </div>
         </div>
       </div>

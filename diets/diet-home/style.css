@@ -197,22 +197,16 @@
   /* Stats Grid */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
   
   .stat-card {
-    background-color: var(--card);
+    background: white;
+    border-radius: 12px;
     padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .stat-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
   
   .stat-header {
@@ -242,38 +236,37 @@
     color: var(--error);
   }
   
-  .stat-card h3 {
-    color: var(--muted);
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
+  .stat-header h3 {
+    color: #374151;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
   }
   
   .stat-value {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 600;
+    color: #111827;
+  }
+  
+  .stat-description {
+    color: #6B7280;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
   }
   
   /* Charts Grid */
   .charts-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .charts-grid:not(.secondary) {
-    grid-template-columns: 2fr 1fr;
-  }
-  
-  .charts-grid.secondary {
-    grid-template-columns: 1fr 1fr;
+    margin-bottom: 2rem;
   }
   
   .chart-card {
-    background-color: var(--card);
+    background: white;
+    border-radius: 12px;
     padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
   
   .chart-header {
@@ -311,7 +304,7 @@
   
   .chart-container {
     height: 300px;
-    width: 100%;
+    position: relative;
   }
   
   /* Recommendations */
@@ -1263,4 +1256,74 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Add these styles */
+  .dashboard-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .guideline-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .planner-section {
+    margin-bottom: 2rem;
+  }
+
+  .planner-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .planner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #374151;
+  }
+
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  .form-group textarea {
+    height: 100px;
+    resize: vertical;
+  }
+
+  .coming-soon {
+    text-align: center;
+    color: #6B7280;
+    padding: 2rem;
+    font-style: italic;
   }
