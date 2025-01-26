@@ -13,19 +13,22 @@ if (!firebase.apps.length) {
 
   firebase.initializeApp(firebaseConfig);
 }
-const db = firebase.firestore();
 
-// State variables
-let currentQuestionIndex = 0;
-let userResponses = [];
-let isListening = false;
-let conversationComplete = false;
-let hasUserInteracted = false;
-let requiredInfo = {
-  goals: false,
-  dietary: false,
-  lifestyle: false
+// Initialize state variables
+const state = {
+  currentQuestionIndex: 0,
+  userResponses: [],
+  isListening: false,
+  conversationComplete: false,
+  hasUserInteracted: false,
+  requiredInfo: {
+    goals: false,
+    dietary: false,
+    lifestyle: false
+  }
 };
+
+const db = firebase.firestore();
 
 // API Keys and configuration
 let API_KEY;
@@ -269,29 +272,25 @@ async function stopListening() {
 }
 
 async function handleUserInput(input) {
-  if (!userResponses) {
-    userResponses = [];
-  }
-
   // Analyze input for required info
   if (input.toLowerCase().includes('goal') || input.toLowerCase().includes('want') || 
       input.toLowerCase().includes('need') || input.toLowerCase().includes('like')) {
-    requiredInfo.goals = true;
+    state.requiredInfo.goals = true;
   }
   if (input.toLowerCase().includes('eat') || input.toLowerCase().includes('food') || 
       input.toLowerCase().includes('diet') || input.toLowerCase().includes('allerg')) {
-    requiredInfo.dietary = true;
+    state.requiredInfo.dietary = true;
   }
   if (input.toLowerCase().includes('day') || input.toLowerCase().includes('work') || 
       input.toLowerCase().includes('life') || input.toLowerCase().includes('active')) {
-    requiredInfo.lifestyle = true;
+    state.requiredInfo.lifestyle = true;
   }
 
-  userResponses.push(input);
+  state.userResponses.push(input);
   
   // Ensure minimum 3 questions before generating plan
-  if (userResponses.length >= 3 && Object.values(requiredInfo).filter(v => v).length >= 2) {
-    conversationComplete = true;
+  if (state.userResponses.length >= 3 && Object.values(state.requiredInfo).filter(v => v).length >= 2) {
+    state.conversationComplete = true;
     await speak("Perfect! I have enough information now. Let me create your personalized diet plan.");
     await generateDietPlan();
   } else {
@@ -310,13 +309,13 @@ async function generateResponse(userInput) {
 
   const prompt = `
     Based on the user's input: "${userInput}"
-    Previous responses: ${JSON.stringify(userResponses.slice(0, -1))}
-    Questions asked so far: ${userResponses.length}
-    Required information still needed: ${JSON.stringify(Object.keys(requiredInfo).filter(key => !requiredInfo[key]))}
+    Previous responses: ${JSON.stringify(state.userResponses.slice(0, -1))}
+    Questions asked so far: ${state.userResponses.length}
+    Required information still needed: ${JSON.stringify(Object.keys(state.requiredInfo).filter(key => !state.requiredInfo[key]))}
     
     Generate a concise follow-up question to gather more information about their diet goals, restrictions, or lifestyle.
     We need at least 3 responses before generating a plan.
-    Focus on gathering missing information: ${Object.keys(requiredInfo).filter(key => !requiredInfo[key]).join(', ')}
+    Focus on gathering missing information: ${Object.keys(state.requiredInfo).filter(key => !state.requiredInfo[key]).join(', ')}
     Keep the response under 20 words.
   `;
 
@@ -358,7 +357,7 @@ async function generateResponse(userInput) {
 }
 
 function checkRequiredInfo() {
-  return Object.values(requiredInfo).every(value => value);
+  return Object.values(state.requiredInfo).every(value => value);
 }
 
 // Speech synthesis function
@@ -507,94 +506,108 @@ function showLoadingPopup(message) {
 
 // Function to generate diet plan
 async function generateDietPlan() {
+  if (!firebase.auth().currentUser) {
+    showError('Please sign in to generate a diet plan.');
+    return;
+  }
+
   const userId = firebase.auth().currentUser.uid;
   
-  // Basic diet template following the specified JSON format
-  const dietPlan = {
-    user_id: userId,
-    diet_details: {
-      diet_type: "Balanced",
-      calories_per_day: 2000,
-      macronutrient_split: {
-        carbohydrates: {
-          percentage: 50,
-          source_examples: ["Whole grains", "Vegetables", "Fruits"]
-        },
-        proteins: {
-          percentage: 30,
-          source_examples: ["Lean meat", "Legumes", "Eggs"]
-        },
-        fats: {
-          percentage: 20,
-          source_examples: ["Avocado", "Nuts", "Olive oil"]
-        }
-      },
-      micronutrients: {
-        vitamins: {
-          A: "700-900 mcg/day",
-          C: "75-90 mg/day",
-          D: "15-20 mcg/day"
-        },
-        minerals: {
-          calcium: "1000 mg/day",
-          iron: "8-18 mg/day",
-          potassium: "2600-3400 mg/day"
-        }
-      },
-      hydration_recommendation: {
-        daily_intake: "2.5 liters/day",
-        reminders: true,
-        tips: ["Drink water 30 minutes before meals", "Carry a reusable water bottle"]
-      },
-      meal_timing: {
-        breakfast: "7:00 AM - 8:00 AM",
-        lunch: "12:00 PM - 1:00 PM",
-        dinner: "7:00 PM - 8:00 PM",
-        snack_windows: ["10:00 AM - 11:00 AM", "4:00 PM - 5:00 PM"],
-        fasting_window: "8:00 PM - 7:00 AM"
-      },
-      additional_guidelines: {
-        dos: [
-          "Include a variety of vegetables in meals",
-          "Choose whole foods over processed foods",
-          "Consume small, frequent meals to maintain energy levels",
-          "Incorporate healthy snacks like nuts and seeds"
-        ],
-        donts: [
-          "Avoid sugary beverages and snacks",
-          "Limit fried and high-fat foods",
-          "Reduce salt intake to less than 5g per day",
-          "Do not skip meals, especially breakfast"
-        ],
-        special_tips: [
-          "Eat mindfully and chew thoroughly",
-          "Monitor portion sizes with your hand or a plate guide",
-          "Plan meals ahead to avoid unhealthy choices"
-        ]
-      },
-      diet_goal: "Weight Maintenance",
-      expected_outcomes: {
-        energy_boost: true,
-        improved_digestion: true,
-        stable_blood_sugar: true,
-        "healthy weight management": true
-      },
-      physical_activity: {
-        recommendation: "30 minutes of moderate exercise, 5 times a week",
-        suggested_activities: ["Brisk walking", "Cycling", "Yoga"]
-      }
-    }
-  };
-
+  // Show loading state
+  const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
+  
   try {
+    // Basic diet template following the specified JSON format
+    const dietPlan = {
+      user_id: userId,
+      diet_details: {
+        diet_type: "Balanced",
+        calories_per_day: 2000,
+        macronutrient_split: {
+          carbohydrates: {
+            percentage: 50,
+            source_examples: ["Whole grains", "Vegetables", "Fruits"]
+          },
+          proteins: {
+            percentage: 30,
+            source_examples: ["Lean meat", "Legumes", "Eggs"]
+          },
+          fats: {
+            percentage: 20,
+            source_examples: ["Avocado", "Nuts", "Olive oil"]
+          }
+        },
+        micronutrients: {
+          vitamins: {
+            A: "700-900 mcg/day",
+            C: "75-90 mg/day",
+            D: "15-20 mcg/day"
+          },
+          minerals: {
+            calcium: "1000 mg/day",
+            iron: "8-18 mg/day",
+            potassium: "2600-3400 mg/day"
+          }
+        },
+        hydration_recommendation: {
+          daily_intake: "2.5 liters/day",
+          reminders: true,
+          tips: ["Drink water 30 minutes before meals", "Carry a reusable water bottle"]
+        },
+        meal_timing: {
+          breakfast: "7:00 AM - 8:00 AM",
+          lunch: "12:00 PM - 1:00 PM",
+          dinner: "7:00 PM - 8:00 PM",
+          snack_windows: ["10:00 AM - 11:00 AM", "4:00 PM - 5:00 PM"],
+          fasting_window: "8:00 PM - 7:00 AM"
+        },
+        additional_guidelines: {
+          dos: [
+            "Include a variety of vegetables in meals",
+            "Choose whole foods over processed foods",
+            "Consume small, frequent meals to maintain energy levels",
+            "Incorporate healthy snacks like nuts and seeds"
+          ],
+          donts: [
+            "Avoid sugary beverages and snacks",
+            "Limit fried and high-fat foods",
+            "Reduce salt intake to less than 5g per day",
+            "Do not skip meals, especially breakfast"
+          ],
+          special_tips: [
+            "Eat mindfully and chew thoroughly",
+            "Monitor portion sizes with your hand or a plate guide",
+            "Plan meals ahead to avoid unhealthy choices"
+          ]
+        },
+        diet_goal: "Weight Maintenance",
+        expected_outcomes: {
+          energy_boost: true,
+          improved_digestion: true,
+          stable_blood_sugar: true,
+          "healthy weight management": true
+        },
+        physical_activity: {
+          recommendation: "30 minutes of moderate exercise, 5 times a week",
+          suggested_activities: ["Brisk walking", "Cycling", "Yoga"]
+        }
+      },
+      user_responses: state.userResponses // Include user responses in the saved data
+    };
+
     await db.collection('diets').add({
       ...dietPlan,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
+    // Remove loading popup
+    loadingPopup.remove();
+    
+    // Show success and redirect
     showSuccessAndRedirect();
   } catch (error) {
     console.error('Error saving diet plan:', error);
+    loadingPopup.remove();
     showError('Failed to save diet plan. Please try again.');
   }
 }
@@ -825,8 +838,9 @@ async function handleTextSubmit() {
 
 // Update addMessageToConversation to only show user messages
 function addMessageToConversation(type, content) {
-  if (type === 'user') { // Only add user messages to the conversation history
+  if (type === 'user') {
     const conversationHistory = document.getElementById('conversationHistory');
+    if (!conversationHistory) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}`;
