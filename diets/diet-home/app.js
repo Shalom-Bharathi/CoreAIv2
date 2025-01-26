@@ -11,13 +11,16 @@ if (!firebase.apps.length) {
     measurementId: "G-0J1RLMVEGC"
   };
 
+  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 }
 
 // Initialize Firebase services
 const db = firebase.firestore();
 const auth = firebase.auth();
-const storage = firebase.storage();
+const storage = firebase.storage(); // This should now work correctly
+
+console.log("Firebase initialized with storage");
 
 // Global variables
 let currentUser = null;
