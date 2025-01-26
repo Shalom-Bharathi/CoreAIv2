@@ -510,7 +510,31 @@ function showLoadingPopup(message) {
   return popup;
 }
 
-// Add generateDietPlan function definition before handleUserInput
+// Add showError function at the top with other utility functions
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-message';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+  
+  // Add styles for error message
+  errorDiv.style.position = 'fixed';
+  errorDiv.style.top = '20px';
+  errorDiv.style.left = '50%';
+  errorDiv.style.transform = 'translateX(-50%)';
+  errorDiv.style.backgroundColor = '#ff4444';
+  errorDiv.style.color = 'white';
+  errorDiv.style.padding = '12px 24px';
+  errorDiv.style.borderRadius = '8px';
+  errorDiv.style.zIndex = '1000';
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 3000);
+}
+
+// Update generateDietPlan function to fix the API request
 async function generateDietPlan() {
   const userResponseData = {
     goals: userResponses[0] || '',
@@ -518,115 +542,67 @@ async function generateDietPlan() {
     lifestyle: userResponses[2] || ''
   };
 
-  const prompt = `As an AI nutritionist specializing in South Indian cuisine, create a structured diet plan based on:
+  const systemPrompt = {
+    role: "system",
+    content: "You are a nutritionist specializing in South Indian cuisine. Provide responses in valid JSON format."
+  };
+
+  const userPrompt = {
+    role: "user",
+    content: `Create a structured South Indian diet plan based on:
 
 Goals: ${userResponseData.goals}
 Dietary Preferences: ${userResponseData.dietary}
 Lifestyle: ${userResponseData.lifestyle}
 
-Create a diet plan focusing exclusively on South Indian meals and ingredients. Provide a structured response in this exact format:
-
+Respond with a JSON object containing:
 {
   "dailyNutrition": {
-    "calories": "number (e.g., 2000)",
+    "calories": number,
     "macros": {
-      "protein": "percentage",
-      "carbs": "percentage",
-      "fats": "percentage"
+      "protein": number,
+      "carbs": number,
+      "fats": number
     }
   },
   "mealSchedule": [
     {
-      "name": "Breakfast",
-      "time": "7:00 AM",
-      "calories": "number",
-      "options": [
-        "South Indian breakfast option 1 (e.g., Idli with sambar)",
-        "South Indian breakfast option 2 (e.g., Dosa with chutney)",
-        "South Indian breakfast option 3 (e.g., Upma)"
-      ]
-    },
-    {
-      "name": "Lunch",
-      "time": "12:00 PM",
-      "calories": "number",
-      "options": [
-        "South Indian lunch option 1 (e.g., Rice with sambar and vegetables)",
-        "South Indian lunch option 2 (e.g., Bisibelebath)",
-        "South Indian lunch option 3 (e.g., Curd rice with pickle)"
-      ]
-    },
-    {
-      "name": "Dinner",
-      "time": "7:00 PM",
-      "calories": "number",
-      "options": [
-        "South Indian dinner option 1 (e.g., Ragi dosa)",
-        "South Indian dinner option 2 (e.g., Millet based dishes)",
-        "South Indian dinner option 3 (e.g., Light rice preparations)"
-      ]
+      "name": string,
+      "time": string,
+      "calories": number,
+      "options": string[]
     }
   ],
   "approvedFoods": {
-    "proteins": ["Traditional South Indian protein sources like lentils, legumes, etc."],
-    "carbs": ["South Indian grains and carb sources"],
-    "fats": ["Traditional South Indian cooking oils and fat sources"],
-    "vegetables": ["Common South Indian vegetables"],
-    "fruits": ["Locally available South Indian fruits"]
+    "proteins": string[],
+    "carbs": string[],
+    "fats": string[],
+    "vegetables": string[],
+    "fruits": string[]
   },
-  "avoidFoods": ["List of foods to avoid"],
+  "avoidFoods": string[],
   "weeklyPlan": {
     "monday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "tuesday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "wednesday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "thursday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "friday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "saturday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
-    },
-    "sunday": {
-      "breakfast": "South Indian breakfast item",
-      "lunch": "South Indian lunch combination",
-      "dinner": "South Indian dinner item"
+      "breakfast": string,
+      "lunch": string,
+      "dinner": string
     }
+    // ... other days
   },
   "progressTracking": {
-    "weeklyGoals": ["goal1", "goal2"],
-    "monthlyGoals": ["goal1", "goal2"],
-    "metrics": ["weight", "measurements", "progress_photos"]
+    "weeklyGoals": string[],
+    "monthlyGoals": string[],
+    "metrics": string[]
   },
   "supplements": [
     {
-      "name": "supplement",
-      "dosage": "amount",
-      "timing": "when to take"
+      "name": string,
+      "dosage": string,
+      "timing": string
     }
   ]
-}
-
-Ensure all meals are authentic South Indian dishes with proper regional names. Include traditional and healthy South Indian ingredients and cooking methods. All responses should be concise and structured exactly as shown above.`;
+}`
+  };
 
   try {
     const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
@@ -639,33 +615,39 @@ Ensure all meals are authentic South Indian dishes with proper regional names. I
       },
       body: JSON.stringify({
         model: 'gpt-4',
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
+        messages: [systemPrompt, userPrompt],
         temperature: 0.7,
-        max_tokens: 2000,
-        response_format: { type: "json_object" }  // Force JSON response
+        max_tokens: 2000
       })
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`API request failed: ${errorData.error?.message || response.status}`);
     }
 
     const data = await response.json();
-    const dietPlan = JSON.parse(data.choices[0].message.content);
+    let dietPlan;
     
-    // Save structured data to Firestore
+    try {
+      // Try to parse as JSON first
+      dietPlan = JSON.parse(data.choices[0].message.content);
+    } catch (e) {
+      console.error('Failed to parse JSON response:', e);
+      // If parsing fails, try to extract structured data from text
+      dietPlan = data.choices[0].message.content;
+    }
+    
+    // Save to Firestore
     await db.collection('diets').add({
       userId: currentUser.uid,
-      plan: dietPlan, // Now storing structured JSON instead of markdown text
+      plan: dietPlan,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       mealsLogged: 0,
       responses: userResponseData,
-      dailyCalories: dietPlan.dailyNutrition.calories,
-      macros: dietPlan.dailyNutrition.macros
+      dailyCalories: typeof dietPlan === 'object' ? dietPlan.dailyNutrition?.calories : extractDailyCalories(dietPlan),
+      macros: typeof dietPlan === 'object' ? dietPlan.dailyNutrition?.macros : extractMacros(dietPlan)
     });
 
     if (loadingPopup) {
@@ -676,6 +658,9 @@ Ensure all meals are authentic South Indian dishes with proper regional names. I
   } catch (error) {
     console.error('Error generating diet plan:', error);
     showError('Failed to generate diet plan. Please try again.');
+    if (loadingPopup) {
+      loadingPopup.remove();
+    }
   }
 }
 
