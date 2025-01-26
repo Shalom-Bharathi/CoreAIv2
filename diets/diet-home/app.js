@@ -35,6 +35,7 @@ class DietDashboard {
 
   renderDietPlan(dietPlan) {
       try {
+        console.log(dietPlan);
           // Update diet type and goal
           document.querySelector('.diet-type').textContent = `${dietPlan.diet_type} - ${dietPlan.diet_goal}`;
 
