@@ -579,20 +579,12 @@ async function generateDietPlan() {
     // Parse the generated diet plan
     const generatedDietPlan = JSON.parse(data.choices[0].message.content);
     
-    // Create the document with a unique ID
-    const docRef = await db.collection('diets').doc();
-    const dietId = docRef.id;
+    // Add user responses and timestamp
+    generatedDietPlan.user_responses = state.userResponses;
+    generatedDietPlan.createdAt = firebase.firestore.FieldValue.serverTimestamp();
 
-    // Save to Firebase with the complete structure
-    await docRef.set({
-      id: dietId,
-      user_responses: state.userResponses,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      ...generatedDietPlan
-    });
-
-    // Store the diet ID in localStorage for retrieval in diet-home
-    localStorage.setItem('currentDietId', dietId);
+    // Save to Firebase - always use the same document ID
+    await db.collection('diets').doc('current_diet').set(generatedDietPlan);
 
     // Remove loading popup
     loadingPopup.remove();
