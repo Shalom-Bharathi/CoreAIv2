@@ -1,36 +1,18 @@
 class DietDashboard {
     constructor() {
         this.db = firebase.firestore();
-        this.initializeFirebase();
     }
 
-    async initializeFirebase() {
-        try {
-            // Set up API key listener
-            const apiRef = this.db.collection('API');
-            apiRef.onSnapshot(querySnapshot => {
-                querySnapshot.docs.forEach(doc => {
-                    this.API_KEY = doc.data().API;
-                    console.log('API key loaded successfully');
-                    // Load diet plan after API key is loaded
-                    this.loadDietPlan();
-                });
-            });
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            this.showError('Failed to initialize. Please try again later.');
-        }
-    }
 
     async loadDietPlan() {
         try {
-            const userId = 'testUser123'; // This will be replaced with actual user ID later
+            const userId = 'nOwDrTnvccNt8i2qVqaHAovO6Jc2'; // This will be replaced with actual user ID later
             console.log('Fetching diet plan for user:', userId);
             
             const dietDoc = await this.db.collection('diets').doc(userId).get();
             
             if (dietDoc.exists) {
-                const data = dietDoc.data();
+                const data = dietDoc.data().diet_details();
                 console.log('Diet plan found:', data);
                 this.renderDietPlan(data);
             } else {
