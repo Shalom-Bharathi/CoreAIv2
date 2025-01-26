@@ -11,9 +11,18 @@ class DietDashboard {
               .get();
 
           if (!snapshot.empty) {
-              const dietPlan = snapshot.docs[0].data();
-              console.log('Raw diet plan data:', dietPlan); // Debug log
-              this.renderDietPlan(dietPlan);
+              const rawData = snapshot.docs[0].data();
+              console.log('Raw diet plan data:', rawData);
+              
+              // Check if data is nested under diet_details or directly available
+              const dietPlan = rawData.diet_details || rawData;
+              console.log('Processed diet plan:', dietPlan);
+              
+              if (dietPlan) {
+                  this.renderDietPlan(dietPlan);
+              } else {
+                  this.showError('Invalid diet plan format.');
+              }
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
