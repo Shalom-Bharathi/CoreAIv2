@@ -54,12 +54,20 @@ async function initializeApp() {
       if (user) {
         currentUser = user;
         await loadUserDietPlan();
-        // Wait for DOM elements to be ready
-        setTimeout(() => {
-          initializeCharts();
-          initializeEventListeners();
-          updateDashboardStats();
-        }, 100);
+        
+        // Wait for next frame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          const nutritionChart = document.getElementById('nutritionChart');
+          const macrosChart = document.getElementById('macrosChart');
+          
+          if (nutritionChart && macrosChart) {
+            initializeCharts();
+            initializeEventListeners();
+            updateDashboardStats();
+          } else {
+            console.error('Chart elements not found in DOM');
+          }
+        });
       } else {
         window.location.href = '../auth/login.html';
       }
@@ -68,25 +76,6 @@ async function initializeApp() {
     console.error('Error initializing app:', error);
   }
 }
-
-// API Keys and configuration
-let thingsRefx;
-let unsubscribex;
-thingsRefx = db.collection('API');
-
-// Wait for API key to be loaded before allowing interactions
-unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
-  querySnapshot.docs.forEach(doc => {
-    API_KEY = doc.data().API;
-    console.log("OpenAI API Key loaded");
-    // Initialize after API key is loaded
-    if (!document.querySelector('.diet-experience-container')) {
-      initializeDietGeneration();
-    }
-  });
-});
-
-const OPENAI_API_KEY = API_KEY;
 
 // Voice configuration
 const USE_ELEVEN_LABS = false; // Set to true to use ElevenLabs, false for browser speech
@@ -674,7 +663,7 @@ async function processAudioResponse(audioBlob) {
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
         file: base64Audio,
@@ -910,7 +899,7 @@ function addMessageToConversation(type, content) {
   }
 }
 
-// Update loadUserDietPlan function to only handle JSON format
+// Update loadUserDietPlan function to only redirect if no diet found
 async function loadUserDietPlan() {
   try {
     const dietSnapshot = await db.collection('diets')
@@ -921,22 +910,18 @@ async function loadUserDietPlan() {
 
     if (!dietSnapshot.empty) {
       userDietPlan = dietSnapshot.docs[0].data();
-      if (userDietPlan && userDietPlan.plan && typeof userDietPlan.plan === 'object') {
+      if (userDietPlan?.plan && typeof userDietPlan.plan === 'object') {
         displayDietPlan();
-        updateDashboardStats();
       } else {
         console.error('Invalid diet plan format');
-        document.getElementById('dietPlanPreview').textContent = 'Error: Invalid diet plan format. Please generate a new plan.';
-        setTimeout(() => {
-          window.location.href = '../generate-diets/index.html';
-        }, 2000);
+        window.location.href = '../generate-diets/index.html';
       }
     } else {
       window.location.href = '../generate-diets/index.html';
     }
   } catch (error) {
     console.error('Error loading diet plan:', error);
-    document.getElementById('dietPlanPreview').textContent = 'Error loading diet plan';
+    showError('Error loading diet plan');
   }
 }
 
@@ -1126,17 +1111,26 @@ async function updateDashboardStats() {
       dailyCalories += doc.data().calories;
     });
 
-    // Update stats
-    document.getElementById('dailyCalories').textContent = 
-      `${dailyCalories}/${userDietPlan.plan.dailyNutrition.calories}`;
-    document.getElementById('mealsLogged').textContent = 
-      mealsSnapshot.size;
+    // Update stats if elements exist
+    const dailyCaloriesElement = document.getElementById('dailyCalories');
+    const mealsLoggedElement = document.getElementById('mealsLogged');
+
+    if (dailyCaloriesElement && userDietPlan?.plan?.dailyNutrition?.calories) {
+      dailyCaloriesElement.textContent = 
+        `${dailyCalories}/${userDietPlan.plan.dailyNutrition.calories}`;
+    }
+
+    if (mealsLoggedElement) {
+      mealsLoggedElement.textContent = mealsSnapshot.size.toString();
+    }
     
     // Update next meal time
     updateNextMealTime();
     
-    // Update charts
-    updateCharts();
+    // Update charts if they exist
+    if (nutritionChart && macrosChart) {
+      updateCharts();
+    }
   } catch (error) {
     console.error('Error updating stats:', error);
   }
