@@ -578,61 +578,20 @@ async function generateDietPlan() {
 
     // Parse the generated diet plan
     const generatedDietPlan = JSON.parse(data.choices[0].message.content);
-    print(generatedDietPlan)
-    // Add user responses and timestamp
-    generatedDietPlan.user_responses = state.userResponses;
-    generatedDietPlan.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-
-    // Save to Firebase - always use the same document ID
-    await db.collection('diets').doc('current_diet').set(generatedDietPlan);
+    
+    // Save to Firebase
+    await saveDietPlan(generatedDietPlan);
 
     // Remove loading popup
     loadingPopup.remove();
     
-    // Show success and redirect
-    // showSuccessAndRedirect();
+    // Redirect to diet home
+    window.location.href = '../diet-home/index.html';
   } catch (error) {
-    console.error('Error generating/saving diet plan:', error);
+    console.error('Error generating diet plan:', error);
     loadingPopup.remove();
     showError('Failed to generate diet plan. Please try again.');
   }
-}
-
-// Function to show success animation and redirect
-function showSuccessAndRedirect() {
-  const mainContent = document.querySelector('.main-content');
-  
-  // Create success overlay
-  const successOverlay = document.createElement('div');
-  successOverlay.className = 'success-overlay';
-  successOverlay.innerHTML = `
-    <div class="success-content">
-      <lottie-player
-        src="https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json"
-        background="transparent"
-        speed="1"
-        style="width: 200px; height: 200px;"
-        autoplay
-      ></lottie-player>
-      <h2>Diet Plan Generated!</h2>
-      <p>Redirecting you to your dashboard...</p>
-    </div>
-  `;
-  
-  mainContent.appendChild(successOverlay);
-  
-  // Add animation classes
-  gsap.from(successOverlay, {
-    opacity: 0,
-    scale: 0.8,
-    duration: 0.5,
-    ease: "back.out(1.7)"
-  });
-  
-  // Redirect after animation
-  setTimeout(() => {
-    window.location.href = '../diet-home/index.html';
-  }, 3000);
 }
 
 // Function to show error message
@@ -799,4 +758,18 @@ function addMessageToConversation(type, content) {
 const link = document.createElement('link');
 link.rel = 'icon';
 link.href = 'data:;base64,iVBORw0KGgo='; // Empty favicon
-document.head.appendChild(link); 
+document.head.appendChild(link);
+
+async function saveDietPlan(dietPlan) {
+    try {
+        await db.collection('dietPlans').add({
+            ...dietPlan,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Redirect to diet home page
+        window.location.href = '../diet-home/index.html';
+    } catch (error) {
+        console.error('Error saving diet plan:', error);
+    }
+} 

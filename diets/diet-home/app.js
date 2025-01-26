@@ -6,14 +6,15 @@ class DietDashboard {
 
     async loadDietPlan() {
         try {
-            console.log('Fetching current diet plan...');
-            
-            const dietDoc = await this.db.collection('diets').doc('current_diet').get();
-            
-            if (dietDoc.exists) {
-                const data = dietDoc.data();
-                console.log('Diet plan found:', data);
-                this.renderDietPlan(data);
+            const snapshot = await this.db.collection('dietPlans')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .get();
+
+            if (!snapshot.empty) {
+                const dietPlan = snapshot.docs[0].data();
+                console.log('Diet plan found:', dietPlan);
+                this.renderDietPlan(dietPlan);
             } else {
                 this.showError('No diet plan found. Please generate a diet plan first.');
                 setTimeout(() => {
@@ -21,7 +22,7 @@ class DietDashboard {
                 }, 3000);
             }
         } catch (error) {
-            console.error('Error loading diet plan:', error);
+            console.error('Error getting diet plan:', error);
             this.showError('Failed to load diet plan. Please try again later.');
         }
     }
@@ -33,14 +34,12 @@ class DietDashboard {
         
         document.body.appendChild(errorToast);
         
-        // Animate in
         gsap.from(errorToast, {
             y: 50,
             opacity: 0,
             duration: 0.3
         });
         
-        // Remove after 3 seconds
         setTimeout(() => {
             gsap.to(errorToast, {
                 y: 50,
@@ -51,16 +50,15 @@ class DietDashboard {
         }, 3000);
     }
 
-    renderDietPlan(data) {
-        const dietPlan = data.diet_details;
+    renderDietPlan(dietPlan) {
         console.log('Rendering diet plan:', dietPlan);
 
         // Update diet type
-        document.querySelector('.diet-type').textContent = dietPlan.diet_type;
+        document.querySelector('.diet-type').textContent = dietPlan.dietType;
 
         // Update overview cards
-        document.querySelector('.calories-value').textContent = `${dietPlan.calories_per_day} kcal`;
-        document.querySelector('.hydration-value').textContent = dietPlan.hydration_recommendation.daily_intake;
+        document.querySelector('.calories-value').textContent = `${dietPlan.calories} kcal`;
+        document.querySelector('.hydration-value').textContent = `${dietPlan.hydration} L`;
 
         // Update macro rings
         const macroRings = document.querySelectorAll('.macro-ring');
