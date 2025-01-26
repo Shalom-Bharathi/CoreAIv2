@@ -151,7 +151,7 @@ async function speak(text) {
   });
 }
 
-// Add message to conversation function
+// Update addMessageToConversation to only show user messages
 function addMessageToConversation(type, content) {
   const conversationHistory = document.getElementById('conversationHistory');
   if (!conversationHistory) return;
@@ -170,11 +170,19 @@ function addMessageToConversation(type, content) {
     conversationHistory.scrollTop = conversationHistory.scrollHeight;
   }
   
-  // Update the AI status text for AI messages
+  // If it's an AI message, just update the status text
   if (type === 'ai') {
     const statusText = document.getElementById('statusText');
     if (statusText) {
       statusText.textContent = content;
+      // Add glow animation to the AI avatar
+      const avatarContainer = document.querySelector('.ai-avatar-container');
+      if (avatarContainer) {
+        avatarContainer.classList.add('speaking');
+        setTimeout(() => {
+          avatarContainer.classList.remove('speaking');
+        }, 3000);
+      }
     }
   }
 }
@@ -382,6 +390,7 @@ async function stopListening() {
   updateUIForListening(false);
 }
 
+// Update handleUserInput to properly handle responses
 async function handleUserInput(input) {
   if (!input) return;
 
@@ -706,4 +715,52 @@ function downloadDietPlan() {
 const link = document.createElement('link');
 link.rel = 'icon';
 link.href = 'data:;base64,iVBORw0KGgo='; // Empty favicon
-document.head.appendChild(link); 
+document.head.appendChild(link);
+
+// Add CSS styles for the AI speaking animation
+const style = document.createElement('style');
+style.textContent = `
+  .ai-avatar-container.speaking {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 123, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 123, 255, 0.6); }
+  }
+
+  .text-input-container input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+  }
+
+  .text-input-container input:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+
+  .text-input-container button {
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .text-input-container button:hover {
+    background: #0056b3;
+  }
+
+  .text-input-container button svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+  }
+`;
+document.head.appendChild(style); 
