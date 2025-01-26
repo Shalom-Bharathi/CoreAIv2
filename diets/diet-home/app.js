@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getFirestore, doc, getDoc, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, enableIndexedDbPersistence, initializeFirestore } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
 class DietDashboard {
@@ -11,7 +11,12 @@ class DietDashboard {
     async initializeFirebase() {
         try {
             const app = initializeApp(firebaseConfig);
-            this.db = getFirestore(app);
+            
+            // Initialize Firestore with long polling settings
+            this.db = initializeFirestore(app, {
+                experimentalForceLongPolling: true,
+                useFetchStreams: false
+            });
             
             // Enable offline persistence
             await enableIndexedDbPersistence(this.db)
@@ -24,6 +29,12 @@ class DietDashboard {
                 });
         } catch (error) {
             console.warn('Firebase initialization error:', error);
+            // Fallback to regular Firestore initialization if needed
+            try {
+                this.db = getFirestore(app);
+            } catch (fallbackError) {
+                console.error('Fallback initialization failed:', fallbackError);
+            }
         }
     }
 
