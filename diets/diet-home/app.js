@@ -1,24 +1,30 @@
 class DietDashboard {
     constructor() {
+        this.db = firebase.firestore();
         this.initializeFirebase();
     }
 
     async initializeFirebase() {
         try {
-            // Initialize Firestore
-            this.db = firebase.firestore();
-            
-            // Load diet plan
-            await this.loadDietPlan();
+            // Set up API key listener
+            const apiRef = this.db.collection('API');
+            apiRef.onSnapshot(querySnapshot => {
+                querySnapshot.docs.forEach(doc => {
+                    this.API_KEY = doc.data().API;
+                    console.log('API key loaded successfully');
+                    // Load diet plan after API key is loaded
+                    this.loadDietPlan();
+                });
+            });
         } catch (error) {
             console.error('Firebase initialization error:', error);
-            this.renderDietPlan(this.getSampleDietPlan());
+            this.showError('Failed to initialize. Please try again later.');
         }
     }
 
     async loadDietPlan() {
         try {
-            const userId = 'testUser123';
+            const userId = 'testUser123'; // This will be replaced with actual user ID later
             console.log('Fetching diet plan for user:', userId);
             
             const dietDoc = await this.db.collection('diets').doc(userId).get();
@@ -28,116 +34,90 @@ class DietDashboard {
                 console.log('Diet plan found:', data);
                 this.renderDietPlan(data);
             } else {
-                console.log('No diet plan found. Using sample data.');
-                this.renderDietPlan(this.getSampleDietPlan());
+                this.showError('No diet plan found. Please generate a diet plan first.');
             }
         } catch (error) {
             console.error('Error loading diet plan:', error);
-            this.renderDietPlan(this.getSampleDietPlan());
+            this.showError('Failed to load diet plan. Please try again later.');
         }
     }
 
-    getSampleDietPlan() {
-        return {
-            userId: 'testUser123',
-            dietType: 'Balanced Mediterranean',
-            dailyCalories: 2200,
-            macroSplit: {
-                carbs: 45,
-                protein: 30,
-                fats: 25
-            },
-            hydration: {
-                dailyWater: '3 liters',
-                recommendations: ['Drink before meals', 'Start day with water']
-            },
-            mealTiming: [
-                { time: '7:00 AM', meal: 'Breakfast' },
-                { time: '10:00 AM', meal: 'Morning Snack' },
-                { time: '1:00 PM', meal: 'Lunch' },
-                { time: '4:00 PM', meal: 'Afternoon Snack' },
-                { time: '7:00 PM', meal: 'Dinner' }
-            ],
-            guidelines: {
-                dos: [
-                    'Eat plenty of vegetables',
-                    'Include lean proteins',
-                    'Choose whole grains',
-                    'Include healthy fats'
-                ],
-                donts: [
-                    'Avoid processed foods',
-                    'Limit added sugars',
-                    'Avoid late night eating',
-                    'Limit alcohol consumption'
-                ]
-            },
-            micronutrients: {
-                vitamins: [
-                    { name: 'Vitamin D', value: '2000 IU' },
-                    { name: 'Vitamin C', value: '500mg' },
-                    { name: 'Vitamin B12', value: '2.4mcg' }
-                ],
-                minerals: [
-                    { name: 'Iron', value: '18mg' },
-                    { name: 'Calcium', value: '1000mg' },
-                    { name: 'Magnesium', value: '400mg' }
-                ]
-            },
-            expectedOutcomes: [
-                'Improved energy levels',
-                'Better weight management',
-                'Enhanced muscle recovery',
-                'Improved digestion'
-            ],
-            physicalActivity: {
-                recommendations: [
-                    '30 minutes cardio daily',
-                    'Strength training 3x week',
-                    'Yoga or stretching 2x week',
-                    'Active recovery walks'
-                ]
-            }
-        };
+    showError(message) {
+        const errorToast = document.createElement('div');
+        errorToast.className = 'error-toast';
+        errorToast.textContent = message;
+        
+        document.body.appendChild(errorToast);
+        
+        // Animate in
+        gsap.from(errorToast, {
+            y: 50,
+            opacity: 0,
+            duration: 0.3
+        });
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            gsap.to(errorToast, {
+                y: 50,
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => errorToast.remove()
+            });
+        }, 3000);
     }
 
     renderDietPlan(dietPlan) {
         // Update diet type
-        document.querySelector('.diet-type').textContent = dietPlan.dietType;
+        document.querySelector('.diet-type').textContent = dietPlan.diet_details.diet_type;
 
         // Update overview cards
-        document.querySelector('.calories-value').textContent = `${dietPlan.dailyCalories} kcal`;
-        document.querySelector('.hydration-value').textContent = dietPlan.hydration.dailyWater;
+        document.querySelector('.calories-value').textContent = `${dietPlan.diet_details.calories_per_day} kcal`;
+        document.querySelector('.hydration-value').textContent = dietPlan.diet_details.hydration_recommendation.daily_intake;
 
         // Update macro rings
         const macroRings = document.querySelectorAll('.macro-ring');
         macroRings.forEach(ring => {
-            const macroType = ring.getAttribute('data-macro');
-            const percentage = dietPlan.macroSplit[macroType];
+            const macroType = ring.classList.contains('carbs') ? 'carbohydrates' :
+                            ring.classList.contains('protein') ? 'proteins' : 'fats';
+            const percentage = dietPlan.diet_details.macronutrient_split[macroType].percentage;
             ring.style.setProperty('--percentage', `${percentage}%`);
             ring.querySelector('.percentage').textContent = `${percentage}%`;
         });
 
         // Update meal timeline
         const timelineContainer = document.querySelector('.meal-timeline');
-        timelineContainer.innerHTML = dietPlan.mealTiming.map(meal => `
+        const mealTiming = dietPlan.diet_details.meal_timing;
+        timelineContainer.innerHTML = `
             <div class="meal-time">
                 <div class="meal-time-content">
-                    <strong>${meal.time}</strong>
-                    <span>${meal.meal}</span>
+                    <strong>Breakfast</strong>
+                    <span>${mealTiming.breakfast}</span>
                 </div>
             </div>
-        `).join('');
+            <div class="meal-time">
+                <div class="meal-time-content">
+                    <strong>Lunch</strong>
+                    <span>${mealTiming.lunch}</span>
+                </div>
+            </div>
+            <div class="meal-time">
+                <div class="meal-time-content">
+                    <strong>Dinner</strong>
+                    <span>${mealTiming.dinner}</span>
+                </div>
+            </div>
+        `;
 
         // Update guidelines
         const dosContainer = document.querySelector('.dos-list');
         const dontsContainer = document.querySelector('.donts-list');
         
-        dosContainer.innerHTML = dietPlan.guidelines.dos.map(item => `
+        dosContainer.innerHTML = dietPlan.diet_details.additional_guidelines.dos.map(item => `
             <li>${item}</li>
         `).join('');
         
-        dontsContainer.innerHTML = dietPlan.guidelines.donts.map(item => `
+        dontsContainer.innerHTML = dietPlan.diet_details.additional_guidelines.donts.map(item => `
             <li>${item}</li>
         `).join('');
 
@@ -145,34 +125,44 @@ class DietDashboard {
         const vitaminsContainer = document.querySelector('.vitamins-list');
         const mineralsContainer = document.querySelector('.minerals-list');
 
-        vitaminsContainer.innerHTML = dietPlan.micronutrients.vitamins.map(vitamin => `
+        const vitamins = Object.entries(dietPlan.diet_details.micronutrients.vitamins);
+        const minerals = Object.entries(dietPlan.diet_details.micronutrients.minerals);
+
+        vitaminsContainer.innerHTML = vitamins.map(([name, value]) => `
             <div class="nutrient-item">
-                <span class="nutrient-name">${vitamin.name}</span>
-                <span class="nutrient-value">${vitamin.value}</span>
+                <span class="nutrient-name">Vitamin ${name}</span>
+                <span class="nutrient-value">${value}</span>
             </div>
         `).join('');
 
-        mineralsContainer.innerHTML = dietPlan.micronutrients.minerals.map(mineral => `
+        mineralsContainer.innerHTML = minerals.map(([name, value]) => `
             <div class="nutrient-item">
-                <span class="nutrient-name">${mineral.name}</span>
-                <span class="nutrient-value">${mineral.value}</span>
+                <span class="nutrient-name">${name}</span>
+                <span class="nutrient-value">${value}</span>
             </div>
         `).join('');
 
         // Update outcomes
         const outcomesContainer = document.querySelector('.outcomes-grid');
-        outcomesContainer.innerHTML = dietPlan.expectedOutcomes.map((outcome, index) => `
-            <div class="outcome-item">
-                <div class="outcome-icon">${index + 1}</div>
-                <div class="outcome-text">${outcome}</div>
-            </div>
-        `).join('');
+        const outcomes = Object.entries(dietPlan.diet_details.expected_outcomes);
+        outcomesContainer.innerHTML = outcomes
+            .filter(([_, value]) => value) // Only show true outcomes
+            .map(([outcome], index) => `
+                <div class="outcome-item">
+                    <div class="outcome-icon">${index + 1}</div>
+                    <div class="outcome-text">${outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                </div>
+            `).join('');
 
         // Update physical activity
         const activityContainer = document.querySelector('.activity-content');
-        activityContainer.innerHTML = dietPlan.physicalActivity.recommendations.map(activity => `
-            <div class="activity-recommendation">${activity}</div>
-        `).join('');
+        const activities = dietPlan.diet_details.physical_activity;
+        activityContainer.innerHTML = `
+            <div class="activity-recommendation">${activities.recommendation}</div>
+            ${activities.suggested_activities.map(activity => `
+                <div class="activity-recommendation">${activity}</div>
+            `).join('')}
+        `;
     }
 }
 
