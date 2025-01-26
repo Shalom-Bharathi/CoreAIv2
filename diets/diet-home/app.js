@@ -40,7 +40,12 @@ class DietDashboard {
 
           // Update overview cards
           document.querySelector('.calories-value').textContent = `${dietPlan.calories_per_day} kcal`;
-          document.querySelector('.hydration-value').textContent = dietPlan.hydration_recommendation.daily_intake;
+          
+          // Update hydration (with the correct data structure)
+          const hydrationValue = document.querySelector('.hydration-value');
+          if (hydrationValue && dietPlan.hydration_recommendation) {
+              hydrationValue.textContent = dietPlan.hydration_recommendation.daily_intake || '2-3 liters';
+          }
 
           // Update macro rings
           const macroRings = document.querySelectorAll('.macro-ring');
@@ -57,7 +62,7 @@ class DietDashboard {
           // Update meal timeline
           const timelineContainer = document.querySelector('.meal-timeline');
           const mealTimings = Object.entries(dietPlan.meal_timing)
-              .filter(([key]) => key !== 'snack_windows' && key !== 'fasting_window')
+              .filter(([key]) => !['snack_windows', 'fasting_window'].includes(key))
               .map(([meal, time]) => ({
                   meal: meal.charAt(0).toUpperCase() + meal.slice(1),
                   time: time
@@ -84,6 +89,30 @@ class DietDashboard {
           if (dontsContainer && dietPlan.additional_guidelines?.donts) {
               dontsContainer.innerHTML = dietPlan.additional_guidelines.donts
                   .map(item => `<li>${item}</li>`).join('');
+          }
+
+          // Update special tips
+          const specialTipsList = document.querySelector('.special-tips-list');
+          if (specialTipsList && dietPlan.additional_guidelines?.special_tips) {
+              specialTipsList.innerHTML = dietPlan.additional_guidelines.special_tips
+                  .map(tip => `<li class="special-tip">${tip}</li>`).join('');
+          }
+
+          // Update expected outcomes
+          const outcomesGrid = document.querySelector('.outcomes-grid');
+          if (outcomesGrid && dietPlan.expected_outcomes) {
+              outcomesGrid.innerHTML = Object.entries(dietPlan.expected_outcomes)
+                  .map(([outcome, value]) => {
+                      if (value === true) {
+                          return `
+                              <div class="outcome-item">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="outcome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                                  <span>${outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                              </div>
+                          `;
+                      }
+                      return '';
+                  }).join('');
           }
 
           // Update micronutrients
@@ -128,30 +157,6 @@ class DietDashboard {
           if (suggestedActivities && dietPlan.physical_activity?.suggested_activities) {
               suggestedActivities.innerHTML = dietPlan.physical_activity.suggested_activities
                   .map(activity => `<span class="activity-tag">${activity}</span>`).join('');
-          }
-
-          // Update special tips
-          const specialTipsList = document.querySelector('.special-tips-list');
-          if (specialTipsList && dietPlan.additional_guidelines?.special_tips) {
-              specialTipsList.innerHTML = dietPlan.additional_guidelines.special_tips
-                  .map(tip => `<li class="special-tip">${tip}</li>`).join('');
-          }
-
-          // Update expected outcomes
-          const outcomesGrid = document.querySelector('.outcomes-grid');
-          if (outcomesGrid && dietPlan.expected_outcomes) {
-              outcomesGrid.innerHTML = Object.entries(dietPlan.expected_outcomes)
-                  .map(([outcome, value]) => {
-                      if (value === true) {
-                          return `
-                              <div class="outcome-item">
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="outcome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                                  <span>${outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                              </div>
-                          `;
-                      }
-                      return '';
-                  }).join('');
           }
 
       } catch (error) {
