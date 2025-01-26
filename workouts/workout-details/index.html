@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreAI - Workout Details</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
+      authDomain: "coreai-82c79.firebaseapp.com",
+      databaseURL: "https://coreai-82c79-default-rtdb.firebaseio.com",
+      projectId: "coreai-82c79",
+      storageBucket: "coreai-82c79.firebasestorage.app",
+      messagingSenderId: "97395011364",
+      appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
+      measurementId: "G-0J1RLMVEGC"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-content">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="logo-text">CoreAI</span>
+        </div>
+        
+        <nav class="nav-links">
+          <a href="../../index.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="../workouts.html" class="nav-link active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>Workouts</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+          <!-- ... other nav links ... -->
+        </nav>
+      </div>
+
+      <button class="logout-button nav-link" id="logoutButton">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        <span>Logout</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="workout-details">
+        <header class="details-header">
+          <div class="header-content">
+            <h1 id="workoutName">Loading workout...</h1>
+            <div class="workout-meta">
+              <span id="workoutType" class="workout-type"></span>
+              <span id="workoutDifficulty" class="workout-difficulty"></span>
+              <span id="workoutDuration" class="workout-duration"></span>
+            </div>
+          </div>
+          <button id="startWorkoutBtn" class="button-primary">
+            Start Workout
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </header>
+
+        <div class="workout-sections">
+          <!-- Warm Up Section -->
+          <section class="workout-section">
+            <h2>Warm Up <span class="section-duration" id="warmUpDuration"></span></h2>
+            <div id="warmUpExercises" class="exercise-list"></div>
+          </section>
+
+          <!-- Main Workout Section -->
+          <section class="workout-section">
+            <h2>Main Workout <span class="section-duration" id="mainWorkoutDuration"></span></h2>
+            <div id="mainWorkoutExercises" class="exercise-list"></div>
+          </section>
+
+          <!-- Cool Down Section -->
+          <section class="workout-section">
+            <h2>Cool Down <span class="section-duration" id="coolDownDuration"></span></h2>
+            <div id="coolDownExercises" class="exercise-list"></div>
+          </section>
+
+          <!-- Tips and Precautions -->
+          <section class="workout-section">
+            <div class="tips-precautions">
+              <div class="tips">
+                <h3>Tips</h3>
+                <ul id="workoutTips"></ul>
+              </div>
+              <div class="precautions">
+                <h3>Precautions</h3>
+                <ul id="workoutPrecautions"></ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Format time helper
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    // Load and display workout
+    async function loadWorkout() {
+      try {
+        // Check if we have a workout ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const workoutId = urlParams.get('id');
+        
+        let workout;
+        
+        if (workoutId) {
+          // Load from Firebase
+          const workoutDoc = await db.collection('workouts').doc(workoutId).get();
+          if (!workoutDoc.exists) {
+            throw new Error('Workout not found');
+          }
+          workout = {
+            id: workoutDoc.id,
+            ...workoutDoc.data()
+          };
+          localStorage.setItem('currentWorkout', JSON.stringify(workout));
+        } else {
+          // Load from localStorage
+          workout = JSON.parse(localStorage.getItem('currentWorkout'));
+          if (!workout) {
+            window.location.href = '../';
+            return;
+          }
+        }
+
+        // Update UI with workout details
+        document.getElementById('workoutName').textContent = workout.name;
+        document.getElementById('workoutType').textContent = workout.type;
+        document.getElementById('workoutDifficulty').textContent = workout.difficulty;
+        document.getElementById('workoutDuration').textContent = workout.duration;
+
+        // Display exercises for each section
+        displayExercises('warmUp', workout.sections.warmUp.exercises);
+        displayExercises('mainWorkout', workout.sections.mainWorkout.exercises);
+        displayExercises('coolDown', workout.sections.coolDown.exercises);
+
+        // Display section durations
+        document.getElementById('warmUpDuration').textContent = workout.sections.warmUp.duration;
+        document.getElementById('mainWorkoutDuration').textContent = workout.sections.mainWorkout.duration;
+        document.getElementById('coolDownDuration').textContent = workout.sections.coolDown.duration;
+
+        // Display tips and precautions
+        if (workout.tips) {
+          const tipsContainer = document.getElementById('workoutTips');
+          workout.tips.forEach(tip => {
+            const li = document.createElement('li');
+            li.textContent = tip;
+            tipsContainer.appendChild(li);
+          });
+        }
+
+        if (workout.precautions) {
+          const precautionsContainer = document.getElementById('workoutPrecautions');
+          workout.precautions.forEach(precaution => {
+            const li = document.createElement('li');
+            li.textContent = precaution;
+            precautionsContainer.appendChild(li);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading workout:', error);
+        alert('Error loading workout details');
+      }
+    }
+
+    function displayExercises(sectionId, exercises) {
+      const container = document.getElementById(`${sectionId}Exercises`);
+      container.innerHTML = '';
+
+      exercises.forEach((exercise, index) => {
+        const exerciseElement = document.createElement('div');
+        exerciseElement.className = 'exercise-card';
+        
+        const details = [];
+        if (exercise.duration) details.push(`${exercise.duration}s`);
+        if (exercise.rest) details.push(`${exercise.rest}s rest`);
+        if (exercise.sets) details.push(`${exercise.sets} sets`);
+        if (exercise.reps) details.push(exercise.reps);
+
+        exerciseElement.innerHTML = `
+          <div class="exercise-header">
+            <span class="exercise-number">${index + 1}</span>
+            <div class="exercise-info">
+              <h3 class="exercise-name">${exercise.name}</h3>
+              <p class="exercise-meta">${details.join(' · ')}</p>
+            </div>
+          </div>
+          <div class="exercise-details">
+            <p class="exercise-instructions">${exercise.instructions}</p>
+            ${exercise.targetMuscles ? `
+              <div class="target-muscles">
+                <span class="label">Target Muscles:</span>
+                <span class="muscles">${exercise.targetMuscles.join(', ')}</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        container.appendChild(exerciseElement);
+      });
+    }
+
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          loadWorkout();
+        } else {
+          window.location.href = '../../login.html';
+        }
+      });
+
+      document.getElementById('startWorkoutBtn').addEventListener('click', () => {
+        window.location.href = '../workout-sessions/';
+      });
+
+      document.getElementById('logoutButton')?.addEventListener('click', () => {
+        auth.signOut().then(() => {
+          window.location.href = '../../login.html';
+        });
+      });
+    });
+  </script>
+
+  <style>
+    .workout-details {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .workout-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .workout-type,
+    .workout-difficulty,
+    .workout-duration {
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      background: var(--background);
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .workout-sections {
+      display: grid;
+      gap: 2rem;
+    }
+
+    .workout-section {
+      background: var(--card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .exercise-list {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .exercise-card {
+      background: var(--background);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .exercise-header {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .exercise-number {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.5rem;
+      font-weight: 500;
+    }
+
+    .exercise-info {
+      flex: 1;
+    }
+
+    .exercise-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .exercise-meta {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .exercise-instructions {
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .target-muscles {
+      font-size: 0.875rem;
+    }
+
+    .target-muscles .label {
+      color: var(--muted);
+      margin-right: 0.5rem;
+    }
+
+    .tips-precautions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .tips ul,
+    .precautions ul {
+      margin-top: 1rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .tips li,
+    .precautions li {
+      padding: 0.5rem 0;
+      color: var(--text);
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .tips li::before,
+    .precautions li::before {
+      content: "•";
+      color: var(--primary);
+      margin-right: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .tips-precautions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</body>
+</html>
+

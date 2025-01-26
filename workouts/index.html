@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  <title>CoreAI - Workouts</title>
+  <link rel="stylesheet" href="../style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
+      authDomain: "coreai-82c79.firebaseapp.com",
+      databaseURL: "https://coreai-82c79-default-rtdb.firebaseio.com",
+      projectId: "coreai-82c79",
+      storageBucket: "coreai-82c79.firebasestorage.app",
+      messagingSenderId: "97395011364",
+      appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
+      measurementId: "G-0J1RLMVEGC"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+  </script>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-content">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="logo-text">CoreAI</span>
+        </div>
+        
+        <nav class="nav-links">
+          <a href="../index.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="nav-link active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>Workouts</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+          <!-- Other nav links remain the same as in index.html -->
+        </nav>
+      </div>
+
+      <button class="logout-button nav-link" id="logoutButton">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        <span>Logout</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <div class="header-content">
+          <h1>Workout Generator</h1>
+          <p>Create personalized workouts based on your goals and preferences.</p>
+        </div>
+        <div class="header-actions">
+          <button class="button-primary create-workout-btn" id="createWorkoutBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Generate New Workout
+          </button>
+        </div>
+      </header>
+
+      <!-- Workout Types Grid -->
+      <div class="workout-types-grid">
+        <a href="#" class="workout-type-card" data-type="strength">
+          <div class="workout-type-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 17.5 17.5"/><path d="m6.5 17.5 17.5-17.5"/><path d="m2 21 3-3"/><path d="m19 4 3-3"/><path d="m2 3 3 3"/><path d="m19 20 3 3"/></svg>
+          </div>
+          <h3>Strength Training</h3>
+          <p>Build muscle and increase strength with targeted exercises</p>
+        </a>
+
+        <a href="#" class="workout-type-card" data-type="cardio">
+          <div class="workout-type-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <h3>Cardio</h3>
+          <p>Improve endurance and burn calories with cardio workouts</p>
+        </a>
+
+        <a href="#" class="workout-type-card" data-type="hiit">
+          <div class="workout-type-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>HIIT</h3>
+          <p>High-intensity interval training for maximum results</p>
+        </a>
+
+        <a href="#" class="workout-type-card" data-type="flexibility">
+          <div class="workout-type-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          </div>
+          <h3>Flexibility</h3>
+          <p>Improve mobility and reduce injury risk with stretching routines</p>
+        </a>
+      </div>
+
+      <!-- Saved Routines Section -->
+      <section class="saved-routines">
+        <h2>Saved Routines</h2>
+        <div class="routines-grid" id="savedRoutines">
+          <!-- Routines will be populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Workout Generation Modal -->
+  <div id="workoutModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Create New Workout</h2>
+      <form id="workoutForm" class="workout-form">
+        <div class="form-group">
+          <label for="workoutType">Workout Type</label>
+          <select id="workoutType" required>
+            <option value="">Select a type</option>
+            <option value="strength">Strength Training</option>
+            <option value="cardio">Cardio</option>
+            <option value="hiit">HIIT</option>
+            <option value="flexibility">Flexibility</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="workoutLength">Workout Length (minutes)</label>
+          <select id="workoutLength" required>
+            <option value="">Select duration</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="button-secondary" id="cancelWorkout">Cancel</button>
+          <button type="submit" class="button-primary">Generate Workout</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Modal -->
+  <div id="loadingModal" class="modal loading-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="loading-spinner"></div>
+      <h3 id="loadingStatus">Initializing...</h3>
+      <div class="loading-steps">
+        <div class="loading-step" id="step1">Fetching user vitals...</div>
+        <div class="loading-step" id="step2">Analyzing body composition...</div>
+        <div class="loading-step" id="step3">Retrieving fitness history...</div>
+        <div class="loading-step" id="step4">Generating personalized workout...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let API_KEY;
+
+    // Get API key from Firebase
+    db.collection('API').onSnapshot(snapshot => {
+      snapshot.forEach(doc => {
+        API_KEY = doc.data().API;
+      });
+    });
+
+    // Load saved workouts
+    async function loadSavedWorkouts() {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const snapshot = await db.collection('workouts')
+          .where('userId', '==', user.uid)
+          .orderBy('createdAt', 'desc')
+          .limit(6)
+          .get();
+
+        const routinesGrid = document.getElementById('savedRoutines');
+        routinesGrid.innerHTML = '';
+
+        if (snapshot.empty) {
+          routinesGrid.innerHTML = `
+            <div class="no-routines">
+              <p>No saved workouts yet. Generate your first workout!</p>
+            </div>
+          `;
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const workout = doc.data();
+          const routineCard = document.createElement('div');
+          routineCard.className = 'routine-card';
+          routineCard.innerHTML = `
+            <div class="routine-header">
+              <h3>${workout.name}</h3>
+              <span class="routine-type">${workout.type}</span>
+            </div>
+            <p>${workout.sections.mainWorkout.exercises.length} exercises · ${workout.duration}</p>
+            <div class="routine-actions">
+              <button class="button-secondary" onclick="viewWorkout('${doc.id}')">
+                View Details
+              </button>
+            </div>
+          `;
+          routinesGrid.appendChild(routineCard);
+        });
+      } catch (error) {
+        console.error('Error loading saved workouts:', error);
+      }
+    }
+
+    // Generate new workout
+    async function generateWorkout(type, length) {
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+
+        const userDoc = await db.collection('body-details').doc(user.uid).get();
+        if (!userDoc.exists) {
+          throw new Error('Please complete your body details first');
+        }
+
+        const bodyDetails = userDoc.data();
+        
+        // Generate workout using OpenAI
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{
+              role: "user",
+              content: `Generate a detailed ${type} workout routine for ${length} minutes.
+              The user has the following details:
+              Height: ${bodyDetails.height}cm
+              Weight: ${bodyDetails.weight}kg
+              Age: ${bodyDetails.age}
+              Body Type: ${bodyDetails.bodyType}
+              Body Fat: ${bodyDetails.fatComposition}%
+
+              Important Rules:
+              1. For ${length} minutes, generate:
+                 - 3 warm-up exercises (5 minutes total)
+                 - Main workout exercises (${length - 10} minutes)
+                 - 3 cool-down exercises (5 minutes total)
+              2. Calculate exercises based on time:
+                 - HIIT: 30-40s work + 20s rest per exercise
+                 - Strength: 45s work + 30s rest per exercise
+                 - Cardio: 60s work + 15s rest per exercise
+                 - Flexibility: 45s hold + 15s transition
+              3. Include at least 8-12 exercises for main workout
+              4. Add 3-5 specific tips for this workout
+              5. Add 3-5 safety precautions
+
+              Return a JSON object with this exact structure:
+              {
+                "name": "Creative workout name",
+                "type": "${type}",
+                "duration": "${length} minutes",
+                "difficulty": "beginner/intermediate/advanced",
+                "targetMuscleGroups": ["muscle1", "muscle2", ...],
+                "equipment": ["equipment1", "equipment2", ...],
+                "estimatedCalories": "XXX calories",
+                "sections": {
+                  "warmUp": {
+                    "duration": "5 minutes",
+                    "exercises": [
+                      {
+                        "name": "Exercise name",
+                        "duration": 30,
+                        "rest": 15,
+                        "instructions": "Detailed form instructions",
+                        "targetMuscles": ["muscle1", "muscle2"]
+                      }
+                    ]
+                  },
+                  "mainWorkout": {
+                    "duration": "${length - 10} minutes",
+                    "exercises": [
+                      {
+                        "name": "Exercise name",
+                        "duration": 40,
+                        "rest": 20,
+                        "sets": 3,
+                        "reps": "12-15",
+                        "instructions": "Detailed form instructions",
+                        "targetMuscles": ["muscle1", "muscle2"],
+                        "equipment": "equipment name if needed"
+                      }
+                    ]
+                  },
+                  "coolDown": {
+                    "duration": "5 minutes",
+                    "exercises": [
+                      {
+                        "name": "Exercise name",
+                        "duration": 30,
+                        "rest": 15,
+                        "instructions": "Detailed form instructions",
+                        "targetMuscles": ["muscle1", "muscle2"]
+                      }
+                    ]
+                  }
+                },
+                "tips": [
+                  "Specific tip 1 for this workout type",
+                  "Specific tip 2 for this workout type",
+                  "Specific tip 3 for this workout type"
+                ],
+                "precautions": [
+                  "Safety precaution 1 for this workout",
+                  "Safety precaution 2 for this workout",
+                  "Safety precaution 3 for this workout"
+                ]
+              }`
+            }],
+            temperature: 0.7
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate workout');
+        }
+
+        const data = await response.json();
+        const workoutData = JSON.parse(data.choices[0].message.content);
+
+        // Save to Firebase
+        const workoutRef = await db.collection('workouts').add({
+          ...workoutData,
+          userId: user.uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          completed: false
+        });
+
+        // Store workout data in localStorage and redirect
+        const workout = {
+          id: workoutRef.id,
+          ...workoutData
+        };
+        localStorage.setItem('currentWorkout', JSON.stringify(workout));
+        window.location.href = './workout-details/';
+
+      } catch (error) {
+        console.error('Error generating workout:', error);
+        throw error;
+      }
+    }
+
+    // Handle form submission
+    async function handleWorkoutSubmit(e) {
+      e.preventDefault();
+      const type = document.getElementById('workoutType').value;
+      const length = document.getElementById('workoutLength').value;
+      
+      hideWorkoutModal();
+      showLoadingModal();
+      startLoadingSequence();
+
+      try {
+        await generateWorkout(type, length);
+      } catch (error) {
+        console.error('Error generating workout:', error);
+        hideLoadingModal();
+        alert('Error generating workout: ' + error.message);
+      }
+    }
+
+    // View workout details
+    function viewWorkout(workoutId) {
+      window.location.href = `./workout-details/?id=${workoutId}`;
+    }
+
+    // UI helper functions
+    function showWorkoutModal() {
+      document.getElementById('workoutModal').style.display = 'flex';
+    }
+
+    function hideWorkoutModal() {
+      document.getElementById('workoutModal').style.display = 'none';
+    }
+
+    function showLoadingModal() {
+      document.getElementById('loadingModal').style.display = 'flex';
+      startLoadingSequence();
+    }
+
+    function hideLoadingModal() {
+      document.getElementById('loadingModal').style.display = 'none';
+    }
+
+    let currentLoadingStep = 0;
+    const loadingSteps = [
+      'Fetching user vitals...',
+      'Analyzing body composition...',
+      'Retrieving fitness history...',
+      'Generating personalized workout...'
+    ];
+
+    function startLoadingSequence() {
+      currentLoadingStep = 0;
+      updateLoadingStep();
+      
+      const interval = setInterval(() => {
+        currentLoadingStep++;
+        
+        if (currentLoadingStep >= loadingSteps.length) {
+          clearInterval(interval);
+          return;
+        }
+        
+        updateLoadingStep();
+      }, 1500);
+    }
+
+    function updateLoadingStep() {
+      document.getElementById('loadingStatus').textContent = loadingSteps[currentLoadingStep];
+      
+      // Update step indicators
+      document.querySelectorAll('.loading-step').forEach((step, index) => {
+        if (index < currentLoadingStep) {
+          step.classList.remove('active');
+          step.classList.add('completed');
+        } else if (index === currentLoadingStep) {
+          step.classList.add('active');
+          step.classList.remove('completed');
+        } else {
+          step.classList.remove('active', 'completed');
+        }
+      });
+    }
+
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check auth state
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          loadSavedWorkouts();
+        } else {
+          window.location.href = '../login.html';
+        }
+      });
+
+      // Setup event listeners
+      document.getElementById('workoutForm').addEventListener('submit', handleWorkoutSubmit);
+      document.getElementById('createWorkoutBtn').addEventListener('click', showWorkoutModal);
+      document.getElementById('cancelWorkout').addEventListener('click', hideWorkoutModal);
+      
+      // Workout type card listeners
+      document.querySelectorAll('.workout-type-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          e.preventDefault();
+          const workoutType = card.dataset.type;
+          document.getElementById('workoutType').value = workoutType;
+          showWorkoutModal();
+        });
+      });
+    });
+  </script>
+
+  <style>
+    .loading-modal .modal-content {
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--primary-light);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-steps {
+      margin-top: 2rem;
+      text-align: left;
+    }
+
+    .loading-step {
+      padding: 0.5rem;
+      color: var(--muted);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .loading-step::before {
+      content: "";
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: inline-block;
+    }
+
+    .loading-step.active {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .loading-step.active::before {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .loading-step.completed {
+      color: var(--success);
+    }
+
+    .loading-step.completed::before {
+      border-color: var(--success);
+      background-color: var(--success);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' width='16px' height='16px'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+      background-size: 0.75rem;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .button-secondary {
+      padding: 0.5rem 1rem;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      color: var(--muted);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .button-secondary:hover {
+      background-color: var(--background);
+      border-color: var(--muted);
+    }
+
+    .workout-details {
+      margin: 1rem 0;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: var(--background);
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .workout-details pre {
+      white-space: pre-wrap;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.5;
+    }
+
+    .error-message {
+      color: var(--error);
+      margin: 1rem 0;
+      padding: 1rem;
+      background: rgb(239 68 68 / 0.1);
+      border-radius: 0.5rem;
+    }
+  </style>
+</body>
+</html>
