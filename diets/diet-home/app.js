@@ -13,7 +13,7 @@ class DietDashboard {
 
           if (!snapshot.empty) {
               const dietPlan = snapshot.docs[0].data();
-              console.log('Diet plan found:', dietPlan["diet_details"]);
+              console.log('Diet plan founde:', dietPlan.diet_details);
               this.renderDietPlan(dietPlan);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
@@ -51,7 +51,7 @@ class DietDashboard {
   }
 
   renderDietPlan(dietPlan) {
-      console.log('Rendering diet plan:', dietPlan);
+      console.log('Rendering diet planE:', dietPlan);
 
       // Update diet type
       document.querySelector('.diet-type').textContent = dietPlan.dietType;
