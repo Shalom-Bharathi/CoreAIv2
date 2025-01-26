@@ -12,9 +12,8 @@ if (!firebase.apps.length) {
   };
 
   firebase.initializeApp(firebaseConfig);
+  console.log("Firebase initialized");
 }
-
-console.log("Firebase initialized");
 
 // Initialize Firebase services
 const db = firebase.firestore();
