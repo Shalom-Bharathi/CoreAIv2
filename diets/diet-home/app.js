@@ -1,58 +1,66 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getFirestore, doc, getDoc, enableIndexedDbPersistence, initializeFirestore } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+import { 
+    getFirestore, 
+    doc, 
+    getDoc,
+    connectFirestoreEmulator
+} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
 class DietDashboard {
     constructor() {
         this.initializeFirebase();
-        this.loadDietPlan();
     }
 
     async initializeFirebase() {
         try {
+            // Initialize Firebase
             const app = initializeApp(firebaseConfig);
             
-            // Initialize Firestore with long polling settings
-            this.db = initializeFirestore(app, {
-                experimentalForceLongPolling: true,
-                useFetchStreams: false
-            });
+            // Initialize Firestore
+            this.db = getFirestore(app);
             
-            // Enable offline persistence
-            await enableIndexedDbPersistence(this.db)
-                .catch((err) => {
-                    if (err.code == 'failed-precondition') {
-                        console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-                    } else if (err.code == 'unimplemented') {
-                        console.log('The current browser does not support persistence.');
-                    }
-                });
-        } catch (error) {
-            console.warn('Firebase initialization error:', error);
-            // Fallback to regular Firestore initialization if needed
+            // Connect to Firestore
             try {
-                this.db = getFirestore(app);
-            } catch (fallbackError) {
-                console.error('Fallback initialization failed:', fallbackError);
+                // Try to connect to local emulator first (for development)
+                connectFirestoreEmulator(this.db, 'localhost', 8080);
+                console.log('Connected to Firestore emulator');
+            } catch (emulatorError) {
+                console.log('Using production Firestore');
             }
+
+            // Load diet plan after successful initialization
+            await this.loadDietPlan();
+            
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            this.renderDietPlan(this.getSampleDietPlan());
         }
     }
 
     async loadDietPlan() {
         try {
-            const userId = 'testUser123'; // Test user ID
-            const dietDoc = await getDoc(doc(this.db, 'dietPlans', userId));
+            const userId = 'testUser123';
+            console.log('Fetching diet plan for user:', userId);
+            
+            const dietDocRef = doc(this.db, 'dietPlans', userId);
+            const dietDoc = await getDoc(dietDocRef);
             
             if (dietDoc.exists()) {
-                const dietData = dietDoc.data();
-                this.renderDietPlan(dietData);
+                const data = dietDoc.data();
+                console.log('Diet plan found:', data);
+                this.renderDietPlan(data);
             } else {
-                console.log('No diet plan found. Using sample data.');
+                console.log('No diet plan found in Firestore. Using sample data.');
                 this.renderDietPlan(this.getSampleDietPlan());
             }
         } catch (error) {
-            console.log('Error loading diet plan:', error);
-            console.log('Using sample data instead.');
+            console.error('Error loading diet plan:', error);
+            console.error('Error details:', {
+                code: error.code,
+                message: error.message,
+                stack: error.stack
+            });
             this.renderDietPlan(this.getSampleDietPlan());
         }
     }
