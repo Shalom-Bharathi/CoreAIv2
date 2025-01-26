@@ -13,6 +13,7 @@ const state = {
 };
 
 const db = firebase.firestore();
+let currentUser = null;
 
 // API Keys and configuration
 let API_KEY;
@@ -57,13 +58,13 @@ if (USE_ELEVEN_LABS) {
   });
 }
 
-// Add this function at the beginning of the file, after Firebase initialization
+// Check for existing diet plan
 async function checkExistingDiet() {
-  if (!firebase.auth().currentUser) return;
+  if (!currentUser) return;
 
   try {
     const dietSnapshot = await db.collection('diets')
-      .where('userId', '==', firebase.auth().currentUser.uid)
+      .where('user_id', '==', currentUser.uid)
       .orderBy('createdAt', 'desc')
       .limit(1)
       .get();
@@ -76,20 +77,44 @@ async function checkExistingDiet() {
   }
 }
 
-// Modify the existing initializeApp function
+// Initialize the application
 async function initializeApp() {
-  // Existing Firebase initialization code...
-
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      await checkExistingDiet(); // Add this line
-      // Rest of the existing code...
-    } else {
-      window.location.href = '../auth/login.html';
-    }
-  });
+  try {
+    // Set up auth state listener
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        console.log('User authenticated:', user.uid);
+        await checkExistingDiet();
+        
+        // Initialize the diet generation interface if no existing plan
+        if (!document.querySelector('.diet-experience-container')) {
+          initializeDietGeneration();
+        }
+      } else {
+        console.log('No user authenticated, redirecting to login');
+        window.location.href = '../auth/login.html';
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing app:', error);
+    showError('Failed to initialize application. Please refresh the page.');
+  }
 }
+
+// Start the application when the document is ready
+document.addEventListener('DOMContentLoaded', () => {
+  initializeApp();
+
+  // Update navigation links
+  const dashboardLink = document.querySelector('a[href="#"].nav-link:not(.active)');
+  if (dashboardLink) {
+    dashboardLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '../diet-home/index.html';
+    });
+  }
+});
 
 function initializeDietGeneration() {
   const mainContent = document.querySelector('.main-content');
@@ -215,11 +240,11 @@ let mediaRecorder = null;
 let audioChunks = [];
 
 async function startListening() {
-  if (isListening) return;
+  if (state.isListening) return;
   
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    isListening = true;
+    state.isListening = true;
     updateUIForListening(true);
     await playAnimation('listening');
     
@@ -248,10 +273,10 @@ async function startListening() {
 }
 
 async function stopListening() {
-  if (!isListening || !mediaRecorder) return;
+  if (!state.isListening || !mediaRecorder) return;
   
   mediaRecorder.stop();
-  isListening = false;
+  state.isListening = false;
   updateUIForListening(false);
 }
 
@@ -603,7 +628,7 @@ async function generateDietPlan() {
     const generatedDietPlan = JSON.parse(data.choices[0].message.content);
     
     // Add user ID and responses
-    generatedDietPlan.user_id = userId;
+    generatedDietPlan.user_id = "nOwDrTnvccNt8i2qVqaHAovO6Jc2";
     generatedDietPlan.user_responses = state.userResponses;
 
     // Save to Firebase
@@ -714,62 +739,6 @@ async function processAudioResponse(audioBlob) {
   }
 }
 
-// Function to display the generated diet plan
-function displayDietPlan(dietPlan) {
-  const mainContent = document.querySelector('.diet-experience-container');
-  if (!mainContent) {
-    console.error('Could not find main content container');
-    return;
-  }
-
-  mainContent.innerHTML = `
-    <div class="diet-plan-card">
-      <div class="diet-plan-content">
-        ${marked.parse(dietPlan)}
-      </div>
-      <div class="diet-plan-actions">
-        <button class="button-primary" onclick="saveDietPlan()">
-          Save Diet Plan
-        </button>
-        <button class="button-secondary" onclick="downloadDietPlan()">
-          Download PDF
-        </button>
-      </div>
-    </div>
-  `;
-
-  // Scroll to top to show the diet plan
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Add animation to the diet plan card
-  const dietPlanCard = mainContent.querySelector('.diet-plan-card');
-  gsap.from(dietPlanCard, {
-    opacity: 0,
-    y: 20,
-    duration: 0.5,
-    ease: "back.out(1.7)"
-  });
-}
-
-// Add these functions to handle save and download
-function saveDietPlan() {
-  // Implement save functionality
-  alert('Diet plan saved successfully!');
-}
-
-function downloadDietPlan() {
-  const dietPlanContent = document.querySelector('.diet-plan-content').innerText;
-  const blob = new Blob([dietPlanContent], { type: 'text/plain' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'diet-plan.txt';
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
-}
-
 // Add this function after initializeDietGeneration
 async function playAnimation(type) {
   const avatarContainer = document.querySelector('.ai-avatar-container');
@@ -876,30 +845,6 @@ function addMessageToConversation(type, content) {
     conversationHistory.scrollTop = conversationHistory.scrollHeight;
   }
 }
-
-// Update initialization to wait for API key
-document.addEventListener('DOMContentLoaded', () => {
-  // Check if user already has a diet plan
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      const doc = await db.collection('diets').doc(user.uid).get();
-      if (doc.exists) {
-        // User has a diet plan, redirect to dashboard
-        window.location.replace('../diet-home/index.html');
-        return;
-      }
-      // If no diet plan exists, initialize the diet generation
-      initializeDietGeneration();
-    }
-  });
-
-  // Update navigation links
-  const dashboardLink = document.querySelector('a[href="#"].nav-link:not(.active)');
-  dashboardLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.href = '../diet-home/index.html';
-  });
-});
 
 // Add favicon link to prevent 404
 const link = document.createElement('link');
