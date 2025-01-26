@@ -1,24 +1,34 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { firebaseConfig } from '../firebase-config.js';
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBz1LNm4t8_Mj5LcWr42xtAkj5GhyPaFrI",
+    authDomain: "coreai-d4174.firebaseapp.com",
+    projectId: "coreai-d4174",
+    storageBucket: "coreai-d4174.appspot.com",
+    messagingSenderId: "1043591730430",
+    appId: "1:1043591730430:web:a1f21ebf95f44e46d2d1c5",
+    measurementId: "G-QVBF344QE2"
+};
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 class DietDashboard {
     constructor() {
         this.init();
+        console.log('DietDashboard initialized');
     }
 
     async init() {
         // Wait for auth state to be ready
-        onAuthStateChanged(auth, (user) => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
+                console.log('User authenticated:', user.uid);
                 this.userId = user.uid;
                 this.loadDietPlan();
             } else {
+                console.log('No user authenticated, redirecting to login');
                 window.location.href = '../auth/login.html';
             }
         });
@@ -26,12 +36,15 @@ class DietDashboard {
 
     async loadDietPlan() {
         try {
-            const dietDoc = await getDoc(doc(db, 'dietPlans', this.userId));
+            console.log('Loading diet plan for user:', this.userId);
+            const dietDoc = await db.collection('dietPlans').doc(this.userId).get();
             
-            if (dietDoc.exists()) {
+            if (dietDoc.exists) {
+                console.log('Diet plan found:', dietDoc.data());
                 const dietPlan = dietDoc.data();
                 this.renderDashboard(dietPlan);
             } else {
+                console.log('No diet plan found, redirecting to generation page');
                 window.location.href = '../generate-diets/index.html';
             }
         } catch (error) {
@@ -41,14 +54,19 @@ class DietDashboard {
     }
 
     renderDashboard(dietPlan) {
+        console.log('Rendering dashboard with diet plan:', dietPlan);
+        
         // Set diet type
-        document.querySelector('.diet-type').textContent = dietPlan.diet_details.diet_type || 'Custom Diet Plan';
+        const dietTypeEl = document.querySelector('.diet-type');
+        if (dietPlan.diet_details?.diet_type) {
+            dietTypeEl.textContent = dietPlan.diet_details.diet_type;
+        }
 
         // Render all sections
         this.renderOverviewCards(dietPlan);
-        this.renderMacronutrients(dietPlan.diet_details.macronutrient_split);
-        this.renderMealSchedule(dietPlan.diet_details.meal_timing);
-        this.renderGuidelines(dietPlan.diet_details.additional_guidelines);
+        this.renderMacronutrients(dietPlan.diet_details?.macronutrient_split);
+        this.renderMealSchedule(dietPlan.diet_details?.meal_timing);
+        this.renderGuidelines(dietPlan.diet_details?.additional_guidelines);
         this.renderMicronutrients(dietPlan.diet_details);
         this.renderOutcomes(dietPlan.expected_outcomes);
         this.renderActivityPlan(dietPlan.physical_activity);
@@ -62,29 +80,50 @@ class DietDashboard {
     renderOverviewCards(dietPlan) {
         // Update calories
         const caloriesValue = document.querySelector('.calories-value');
-        caloriesValue.textContent = `${dietPlan.diet_details.daily_calories || '2000'} kcal`;
+        if (caloriesValue) {
+            caloriesValue.textContent = dietPlan.diet_details?.daily_calories ? 
+                `${dietPlan.diet_details.daily_calories} kcal` : '2000 kcal';
+        }
 
         // Update hydration
         const hydrationValue = document.querySelector('.hydration-value');
-        hydrationValue.textContent = dietPlan.hydration_recommendations?.daily_intake || '2.5 L';
+        if (hydrationValue) {
+            hydrationValue.textContent = dietPlan.hydration_recommendations?.daily_intake || '2.5 L';
+        }
     }
 
     renderMacronutrients(macros) {
-        // Update ring percentages
-        document.querySelector('.macro-ring.carbs').style.setProperty('--percentage', `${macros?.carbohydrates || 50}%`);
-        document.querySelector('.macro-ring.protein').style.setProperty('--percentage', `${macros?.protein || 30}%`);
-        document.querySelector('.macro-ring.fats').style.setProperty('--percentage', `${macros?.fats || 20}%`);
+        if (!macros) {
+            console.log('No macronutrient data available');
+            return;
+        }
 
-        // Update percentage text
-        document.querySelector('.macro-ring.carbs .percentage').textContent = `${macros?.carbohydrates || 50}%`;
-        document.querySelector('.macro-ring.protein .percentage').textContent = `${macros?.protein || 30}%`;
-        document.querySelector('.macro-ring.fats .percentage').textContent = `${macros?.fats || 20}%`;
+        console.log('Rendering macronutrients:', macros);
+
+        const updateMacro = (type, value) => {
+            const ring = document.querySelector(`.macro-ring.${type}`);
+            const percentage = document.querySelector(`.macro-ring.${type} .percentage`);
+            
+            if (ring && percentage) {
+                const macroValue = value || (type === 'carbs' ? 50 : type === 'protein' ? 30 : 20);
+                ring.style.setProperty('--percentage', `${macroValue}%`);
+                percentage.textContent = `${macroValue}%`;
+            }
+        };
+
+        updateMacro('carbs', macros.carbohydrates);
+        updateMacro('protein', macros.protein);
+        updateMacro('fats', macros.fats);
     }
 
     renderMealSchedule(mealTiming) {
         const timeline = document.querySelector('.meal-timeline');
-        if (!mealTiming || !timeline) return;
+        if (!mealTiming || !timeline) {
+            console.log('No meal timing data or timeline element');
+            return;
+        }
 
+        console.log('Rendering meal schedule:', mealTiming);
         timeline.innerHTML = Object.entries(mealTiming)
             .map(([meal, time], index) => `
                 <div class="meal-time" style="animation-delay: ${index * 0.1}s">
@@ -94,7 +133,12 @@ class DietDashboard {
     }
 
     renderGuidelines(guidelines) {
-        if (!guidelines) return;
+        if (!guidelines) {
+            console.log('No guidelines data available');
+            return;
+        }
+
+        console.log('Rendering guidelines:', guidelines);
 
         // Render do's
         const dosList = document.querySelector('.dos-list');
@@ -122,6 +166,13 @@ class DietDashboard {
     }
 
     renderMicronutrients(dietDetails) {
+        if (!dietDetails) {
+            console.log('No diet details available');
+            return;
+        }
+
+        console.log('Rendering micronutrients:', dietDetails);
+
         // Render vitamins
         const vitaminsList = document.querySelector('.vitamins-list');
         if (vitaminsList && dietDetails.vitamins) {
@@ -149,8 +200,12 @@ class DietDashboard {
 
     renderOutcomes(outcomes) {
         const outcomesGrid = document.querySelector('.outcomes-grid');
-        if (!outcomesGrid || !outcomes) return;
+        if (!outcomesGrid || !outcomes) {
+            console.log('No outcomes data or grid element');
+            return;
+        }
 
+        console.log('Rendering outcomes:', outcomes);
         outcomesGrid.innerHTML = outcomes
             .map(outcome => `
                 <div class="outcome-item">
@@ -161,7 +216,12 @@ class DietDashboard {
     }
 
     renderActivityPlan(activity) {
-        if (!activity) return;
+        if (!activity) {
+            console.log('No activity plan data');
+            return;
+        }
+
+        console.log('Rendering activity plan:', activity);
 
         // Render main recommendation
         const recommendationEl = document.querySelector('.activity-recommendation');
@@ -195,6 +255,7 @@ class DietDashboard {
     }
 
     showError(message) {
+        console.error('Error:', message);
         // Create error toast
         const toast = document.createElement('div');
         toast.className = 'error-toast';
