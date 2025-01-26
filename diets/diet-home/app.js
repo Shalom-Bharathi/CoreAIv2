@@ -13,7 +13,7 @@ class DietDashboard {
           if (!snapshot.empty) {
               const dietPlan = snapshot.docs[0].data();
               console.log('Diet plan found:', dietPlan);
-              this.renderDietPlan(dietPlan);
+              this.renderDietPlan(dietPlan.diet_details);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
