@@ -2,26 +2,14 @@ class DietDashboard {
     constructor() {
         this.initializeFirebase();
     }
+
     async initializeFirebase() {
         try {
-            // Initialize Firebase
-            const app = initializeApp(firebaseConfig);
-            
             // Initialize Firestore
-            this.db = getFirestore(app);
+            this.db = firebase.firestore();
             
-            // Connect to Firestore
-            try {
-                // Try to connect to local emulator first (for development)
-                connectFirestoreEmulator(this.db, 'localhost', 8080);
-                console.log('Connected to Firestore emulator');
-            } catch (emulatorError) {
-                console.log('Using production Firestore');
-            }
-
-            // Load diet plan after successful initialization
+            // Load diet plan
             await this.loadDietPlan();
-            
         } catch (error) {
             console.error('Firebase initialization error:', error);
             this.renderDietPlan(this.getSampleDietPlan());
@@ -33,24 +21,18 @@ class DietDashboard {
             const userId = 'testUser123';
             console.log('Fetching diet plan for user:', userId);
             
-            const dietDocRef = doc(this.db, 'diets', userId);
-            const dietDoc = await getDoc(dietDocRef);
+            const dietDoc = await this.db.collection('diets').doc(userId).get();
             
-            if (dietDoc.exists()) {
+            if (dietDoc.exists) {
                 const data = dietDoc.data();
                 console.log('Diet plan found:', data);
                 this.renderDietPlan(data);
             } else {
-                console.log('No diet plan found in Firestore. Using sample data.');
+                console.log('No diet plan found. Using sample data.');
                 this.renderDietPlan(this.getSampleDietPlan());
             }
         } catch (error) {
             console.error('Error loading diet plan:', error);
-            console.error('Error details:', {
-                code: error.code,
-                message: error.message,
-                stack: error.stack
-            });
             this.renderDietPlan(this.getSampleDietPlan());
         }
     }
