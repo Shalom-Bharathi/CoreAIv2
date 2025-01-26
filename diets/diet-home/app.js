@@ -11,10 +11,9 @@ class DietDashboard {
               .get();
 
           if (!snapshot.empty) {
-              const dietPlanz = snapshot.docs[0].data();
-              console.log('Raw diet plan data:', dietPlanz); // Debug log
-              console.log('Raw diet plan data2:', dietPlanz.diet_details); // Debug log
-              this.renderDietPlan(dietPlanz.diet_details);
+              const dietPlan = snapshot.docs[0].data();
+              console.log('Raw diet plan data:', dietPlan); // Debug log
+              this.renderDietPlan(dietPlan);
           } else {
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
@@ -34,10 +33,9 @@ class DietDashboard {
       document.querySelector('.diet-container').prepend(errorDiv);
   }
 
-  renderDietPlan(data) {
+  renderDietPlan(dietPlan) {
       try {
-          console.log('Rendering diet plan:', data); // Debug log
-          const dietPlan = data.diet_details || data; // Handle potential nesting
+          console.log('Rendering diet plan:', dietPlan); // Debug log
 
           // Update diet type and goal
           const dietTypeElement = document.querySelector('.diet-type');
@@ -51,40 +49,24 @@ class DietDashboard {
               caloriesElement.textContent = `${dietPlan.calories_per_day || 2000} kcal`;
           }
           
-          // Update hydration with fallback values
+          // Update hydration with safe access
           const hydrationElement = document.querySelector('.hydration-value');
           if (hydrationElement) {
-              let hydrationValue = '2-3 liters'; // Default value
-              if (dietPlan.hydration_recommendation) {
-                  hydrationValue = dietPlan.hydration_recommendation.daily_water || 
-                                 dietPlan.hydration_recommendation.daily_intake || 
-                                 '2-3 liters';
-              }
+              // Check the hydration data structure
+              console.log('Hydration data:', dietPlan.hydration_recommendation); // Debug log
+              const hydrationValue = dietPlan.hydration_recommendation?.daily_water || 
+                                   dietPlan.hydration_recommendation?.daily_intake || 
+                                   '2-3 liters';
               hydrationElement.textContent = hydrationValue;
           }
 
           // Update macro rings with safe access
           const macroRings = document.querySelectorAll('.macro-ring');
-          const defaultMacros = {
-              carbohydrates: { percentage: 50 },
-              proteins: { percentage: 25 },
-              fats: { percentage: 25 }
-          };
-
           macroRings.forEach(ring => {
               const macroType = ring.getAttribute('data-macro');
-              console.log('Processing macro type:', macroType); // Debug log
-              
-              // Get the macro data with fallback
-              const macroData = (dietPlan.macronutrient_split && dietPlan.macronutrient_split[macroType]) 
-                  ? dietPlan.macronutrient_split[macroType] 
-                  : defaultMacros[macroType];
-              
+              const macroData = dietPlan.macronutrient_split?.[macroType];
               console.log(`Macro data for ${macroType}:`, macroData); // Debug log
-              
-              const percentage = macroData?.percentage || defaultMacros[macroType].percentage;
-              console.log(`Percentage for ${macroType}:`, percentage); // Debug log
-              
+              const percentage = macroData?.percentage || 0;
               ring.style.setProperty('--percentage', `${percentage}%`);
               const percentageElement = ring.querySelector('.percentage');
               if (percentageElement) {
@@ -196,7 +178,7 @@ class DietDashboard {
 
       } catch (error) {
           console.error('Error rendering diet plan:', error);
-          console.log('Problematic diet plan data:', JSON.stringify(data, null, 2));
+          console.log('Problematic diet plan data:', JSON.stringify(dietPlan, null, 2));
           this.showError('Error displaying diet plan information.');
       }
   }
