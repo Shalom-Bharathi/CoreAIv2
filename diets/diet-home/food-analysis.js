@@ -109,7 +109,7 @@ const updateAnalyzeButton = () => {
 };
 
 window.analyzeImage = async () => {
-  if (!selectedImage) return;
+  if (!selectedImage || !API_KEY) return;
 
   const analyzeButton = document.getElementById('analyze-button');
   const loadingSpinner = document.getElementById('loading-spinner');
