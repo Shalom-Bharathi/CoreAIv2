@@ -37,29 +37,38 @@ class DietDashboard {
 
       if (userDoc.exists) {
         const userData = userDoc.data();
+        console.log('User document data:', userData);
+        
         if (userData.dietPlan) {
           console.log('Diet plan found in users collection');
-          dietPlan = userData.dietPlan.diet_details || userData.dietPlan;
+          dietPlan = userData.dietPlan;
+          if (dietPlan.diet_details) {
+            console.log('Using diet_details from plan');
+            dietPlan = dietPlan.diet_details;
+          }
         }
       }
 
-      // If not found in users collection, try dietPlans collection
+      // If not found in users collection, try dietPlan collection
       if (!dietPlan) {
+        console.log('Checking dietPlan collection...');
         const snapshot = await this.db.collection('dietPlan')
           .where('userId', '==', this.user.uid)
           .orderBy('timestamp', 'desc')
           .limit(1)
           .get();
 
+        console.log('DietPlan query result:', !snapshot.empty ? 'Found' : 'Not found');
+
         if (!snapshot.empty) {
-          console.log('Diet plan found in dietPlans collection');
           const data = snapshot.docs[0].data();
+          console.log('Diet plan found in dietPlan collection:', data);
           dietPlan = data.diet_details || data;
         }
       }
 
       if (dietPlan) {
-        console.log('Rendering diet plan:', dietPlan);
+        console.log('Final diet plan to render:', dietPlan);
         this.renderDietPlan(dietPlan);
       } else {
         console.log('No diet plan found, redirecting to generate diet...');
@@ -225,7 +234,7 @@ class DietDashboard {
   }
 }
 
-// Wait for both DOM and Firebase to be ready
+// Initialize the dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM Content Loaded - Dashboard ready for initialization');
 });

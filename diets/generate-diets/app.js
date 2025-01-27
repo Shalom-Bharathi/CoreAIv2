@@ -768,14 +768,45 @@ document.head.appendChild(link);
 
 async function saveDietPlan(dietPlan) {
     try {
-        await db.collection('dietPlan').add({
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.error('No user logged in');
+            return;
+        }
+
+        console.log('Current user:', user.email);
+        console.log('Saving diet plan:', dietPlan);
+
+        // Add user ID and timestamp to diet plan
+        const dietPlanWithUser = {
             ...dietPlan,
+            userId: user.uid,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        // Save to dietPlan collection
+        const docRef = await firebase.firestore().collection('dietPlan')
+            .add(dietPlanWithUser);
         
-        // Redirect to diet home page
-        window.location.href = '../diet-home/index.html';
+        console.log('Diet plan saved to dietPlan collection with ID:', docRef.id);
+        
+        // Also update the user's document with the latest diet plan
+        await firebase.firestore().collection('users')
+            .doc(user.uid)
+            .set({
+                dietPlan: dietPlanWithUser,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        
+        console.log('Diet plan saved to user document');
+        
+        // Wait a moment to ensure Firestore updates are complete
+        setTimeout(() => {
+            console.log('Redirecting to diet home page...');
+            window.location.href = '../diet-home/index.html';
+        }, 1000);
     } catch (error) {
         console.error('Error saving diet plan:', error);
+        alert('Failed to save diet plan. Please try again.');
     }
 } 
