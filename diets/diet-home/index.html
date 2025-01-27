@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
   <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-  <title>CoreAI Diet Dashboardz</title>
+  <title>CoreAI Diet Dashboard</title>
   <link rel="stylesheet" href="./style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
@@ -56,56 +56,6 @@
     });
   </script>
 
-  <!-- Add this in the head section after other scripts -->
-  <script>
-    var vapiInstance = null;
-    const assistant = "asst_nPAQfGhHVPnOOZQYGIjmEcZY";
-    const apiKey = "vapi_pk_3Ym4QXVYNPUgGBUYHhAZvJGV";
-    const buttonConfig = {
-      position: "bottom-right",
-      offset: "40px",
-      width: "50px",
-      height: "50px",
-      idle: {
-        color: `rgb(93, 254, 202)`,
-        type: "pill",
-        title: "Have a question about your diet?",
-        subtitle: "Talk with our AI nutritionist",
-        icon: `https://unpkg.com/lucide-static@0.321.0/icons/phone.svg`,
-      },
-      loading: {
-        color: `rgb(93, 124, 202)`,
-        type: "pill",
-        title: "Connecting...",
-        subtitle: "Please wait",
-        icon: `https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg`,
-      },
-      active: {
-        color: `rgb(255, 0, 0)`,
-        type: "pill",
-        title: "Call is in progress...",
-        subtitle: "End the call",
-        icon: `https://unpkg.com/lucide-static@0.321.0/icons/phone-off.svg`,
-      },
-    };
-
-    (function (d, t) {
-      var g = document.createElement(t),
-        s = d.getElementsByTagName(t)[0];
-      g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-      g.defer = true;
-      g.async = true;
-      s.parentNode.insertBefore(g, s);
-
-      g.onload = function () {
-        vapiInstance = window.vapiSDK.run({
-          apiKey: apiKey,
-          assistant: assistant,
-          config: buttonConfig,
-        });
-      };
-    })(document, "script");
-  </script>
 </head>
 <body>
   <div class="diet-container">
