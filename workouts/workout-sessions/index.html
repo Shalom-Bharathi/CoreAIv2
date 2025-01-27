@@ -43,8 +43,9 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
   <audio id="completionAudio3" src="../../assets/completionAudio3.mp3" preload="auto"></audio>
   
   <!-- Exercise transition sounds -->
-  <audio id="exerciseStartAudio" src="../../assets/exercise.mp3" preload="auto"></audio>
-  <audio id="breakStartAudio" src="../../assets/break.mp3" preload="auto"></audio>
+  <audio id="exerciseStartAudio" src="../../assets/exercise-start.mp3" preload="auto"></audio>
+  <audio id="breakStartAudio" src="../../assets/break-start.mp3" preload="auto"></audio>
+  <audio id="completionAudio" src="../../assets/completion.mp3" preload="auto"></audio>
 </head>
 
 <body>
@@ -164,7 +165,7 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
             </div>
           </div>
 
-          <!-- Add this after the workout-stats div in the workout-sidebar -->
+          <!-- Music Player -->
           <div class="music-player">
             <h3>Workout Music</h3>
             <audio id="workoutMusic" src="../../assets/workout-music.mp3" loop></audio>

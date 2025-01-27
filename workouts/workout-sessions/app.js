@@ -11,8 +11,54 @@ class WorkoutSession {
     this.totalSets = 1;
     this.startTime = null;
     this.calorieInterval = null;
-    this.music = null;
+    this.music = document.getElementById('workoutMusic');
     this.isMusicPlaying = false;
+    
+    // Bind methods
+    this.togglePause = this.togglePause.bind(this);
+    this.skipExercise = this.skipExercise.bind(this);
+    this.previousExercise = this.previousExercise.bind(this);
+    this.toggleMusic = this.toggleMusic.bind(this);
+    this.handleVolumeChange = this.handleVolumeChange.bind(this);
+  }
+
+  async initialize() {
+    // Initialize music controls
+    const volumeSlider = document.getElementById('volumeSlider');
+    const toggleMusicBtn = document.getElementById('toggleMusicBtn');
+    
+    if (volumeSlider) {
+      volumeSlider.addEventListener('input', this.handleVolumeChange);
+    }
+    
+    if (toggleMusicBtn) {
+      toggleMusicBtn.addEventListener('click', this.toggleMusic);
+    }
+
+    // Load workout data
+    await this.loadWorkout();
+  }
+
+  handleVolumeChange(event) {
+    if (this.music) {
+      this.music.volume = event.target.value / 100;
+    }
+  }
+
+  toggleMusic() {
+    if (!this.music) return;
+
+    const toggleBtn = document.getElementById('toggleMusicBtn');
+    
+    if (this.isMusicPlaying) {
+      this.music.pause();
+      toggleBtn?.classList.remove('playing');
+    } else {
+      this.music.play().catch(error => console.error('Error playing music:', error));
+      toggleBtn?.classList.add('playing');
+    }
+    
+    this.isMusicPlaying = !this.isMusicPlaying;
   }
 
   processWorkoutData(workoutData) {
@@ -70,7 +116,12 @@ class WorkoutSession {
       document.getElementById('exerciseCount').textContent = 
         `1/${this.workout.exercises.length}`;
       
+      this.startExercise(0);
       this.updateUpcomingExercises();
+      
+      // Start tracking calories
+      this.startTime = Date.now();
+      this.calorieInterval = setInterval(() => this.updateCalories(), 60000);
     } catch (error) {
       console.error('Error loading workout:', error);
       alert('Error loading workout');
@@ -122,10 +173,11 @@ class WorkoutSession {
     timerPhase.textContent = this.isResting ? 'Rest' : 'Exercise';
 
     const exercise = this.workout.exercises[this.currentExerciseIndex];
-    const totalTime = this.isResting ? exercise.rest : exercise.duration;
-    const progress = (this.timeRemaining / totalTime) * 100;
+    const duration = this.isResting ? exercise.rest : exercise.duration;
+    const progress = (duration - this.timeRemaining) / duration;
     const circumference = 2 * Math.PI * 90;
-    const offset = circumference - (progress / 100) * circumference;
+    const offset = circumference * (1 - progress);
+    
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
     circle.style.strokeDashoffset = offset;
   }
@@ -164,8 +216,33 @@ class WorkoutSession {
     }, 1000);
   }
 
+  togglePause() {
+    this.isPaused = !this.isPaused;
+    const pauseButton = document.getElementById('pauseButton');
+    
+    if (pauseButton) {
+      pauseButton.innerHTML = this.isPaused ? 
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>` :
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+    }
+  }
+
+  skipExercise() {
+    if (this.currentExerciseIndex < this.workout.exercises.length - 1) {
+      this.startExercise(this.currentExerciseIndex + 1);
+    }
+  }
+
+  previousExercise() {
+    if (this.currentExerciseIndex > 0) {
+      this.startExercise(this.currentExerciseIndex - 1);
+    }
+  }
+
   updateUpcomingExercises() {
     const container = document.getElementById('upcomingExercises');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     for (let i = this.currentExerciseIndex + 1; i < Math.min(this.currentExerciseIndex + 4, this.workout.exercises.length); i++) {
@@ -183,6 +260,16 @@ class WorkoutSession {
   async completeWorkout() {
     clearInterval(this.timer);
     clearInterval(this.calorieInterval);
+    
+    // Play completion sound
+    const completionAudio = document.getElementById('completionAudio');
+    if (completionAudio) {
+      try {
+        await completionAudio.play();
+      } catch (error) {
+        console.error('Error playing completion sound:', error);
+      }
+    }
     
     // Fade out and stop the music
     if (this.music && this.isMusicPlaying) {
@@ -202,6 +289,7 @@ class WorkoutSession {
 
     try {
       if (this.workout.id) {
+        const db = firebase.firestore();
         await db.collection('workouts').doc(this.workout.id).update({
           completed: true,
           completedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -211,39 +299,6 @@ class WorkoutSession {
     } catch (error) {
       console.error('Error completing workout:', error);
       window.location.href = '../';
-    }
-  }
-
-  togglePause() {
-    this.isPaused = !this.isPaused;
-    document.getElementById('pauseButton').innerHTML = this.isPaused ? 
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>' :
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-  }
-
-  skipExercise() {
-    if (this.currentExerciseIndex < this.workout.exercises.length - 1) {
-      this.startExercise(this.currentExerciseIndex + 1);
-    } else {
-      this.completeWorkout();
-    }
-  }
-
-  previousExercise() {
-    if (this.currentExerciseIndex > 0) {
-      this.startExercise(this.currentExerciseIndex - 1);
-    }
-  }
-
-  startWorkout() {
-    this.startTime = Date.now();
-    this.calorieInterval = setInterval(() => this.updateCalories(), 60000);
-    this.startExercise(0);
-    document.getElementById('startWorkoutBtn').style.display = 'none';
-    
-    // Start the music when workout begins
-    if (this.music && !this.isMusicPlaying) {
-      this.toggleMusic();
     }
   }
 
@@ -274,7 +329,7 @@ class WorkoutSession {
     if (audio) {
       try {
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(error => console.error('Error playing exercise start sound:', error));
       } catch (error) {
         console.error('Error playing exercise start sound:', error);
       }
@@ -286,55 +341,11 @@ class WorkoutSession {
     if (audio) {
       try {
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(error => console.error('Error playing break start sound:', error));
       } catch (error) {
         console.error('Error playing break start sound:', error);
       }
     }
-  }
-
-  initializeMusic() {
-    this.music = document.getElementById('workoutMusic');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const toggleMusicBtn = document.getElementById('toggleMusicBtn');
-
-    if (this.music && volumeSlider) {
-      this.music.volume = volumeSlider.value / 100;
-    }
-
-    volumeSlider?.addEventListener('input', (e) => {
-      if (this.music) {
-        this.music.volume = e.target.value / 100;
-      }
-    });
-
-    toggleMusicBtn?.addEventListener('click', () => this.toggleMusic());
-
-    volumeSlider?.addEventListener('change', () => {
-      localStorage.setItem('workoutMusicVolume', volumeSlider.value);
-    });
-
-    const savedVolume = localStorage.getItem('workoutMusicVolume');
-    if (savedVolume && volumeSlider) {
-      volumeSlider.value = savedVolume;
-      if (this.music) {
-        this.music.volume = savedVolume / 100;
-      }
-    }
-  }
-
-  toggleMusic() {
-    const toggleBtn = document.getElementById('toggleMusicBtn');
-    if (!this.music) return;
-
-    if (this.isMusicPlaying) {
-      this.music.pause();
-      toggleBtn?.classList.remove('playing');
-    } else {
-      this.music.play();
-      toggleBtn?.classList.add('playing');
-    }
-    this.isMusicPlaying = !this.isMusicPlaying;
   }
 }
 
@@ -343,164 +354,34 @@ const workoutSession = new WorkoutSession();
 
 // Add event listeners when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('logoutButton')?.addEventListener('click', handleSignOut);
-  document.getElementById('pauseButton').addEventListener('click', () => workoutSession.togglePause());
-  document.getElementById('skipButton').addEventListener('click', () => workoutSession.skipExercise());
-  document.getElementById('previousButton').addEventListener('click', () => workoutSession.previousExercise());
-  document.getElementById('startWorkoutBtn').addEventListener('click', () => workoutSession.startWorkout());
-  
-  // Initialize music player
-  workoutSession.initializeMusic();
-  
-  workoutSession.loadWorkout();
-});
+  // Initialize the workout session
+  workoutSession.initialize();
 
-// Add these functions to handle workout completion
+  // Add event listeners for control buttons
+  const logoutButton = document.getElementById('logoutButton');
+  const pauseButton = document.getElementById('pauseButton');
+  const skipButton = document.getElementById('skipButton');
+  const previousButton = document.getElementById('previousButton');
 
-async function completeWorkout(workoutData) {
-    try {
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            console.error('No user logged in');
-            return;
-        }
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = '../../index.html';
+      }).catch((error) => {
+        console.error('Error signing out:', error);
+      });
+    });
+  }
 
-        // Calculate workout duration
-        const duration = calculateWorkoutDuration();
-        
-        // Prepare workout session data
-        const sessionData = {
-            userId: user.uid,
-            userEmail: user.email,
-            workoutId: workoutData.id,
-            workoutName: workoutData.name,
-            completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            duration: duration,
-            exercisesCompleted: workoutData.exercises.length,
-            exercises: workoutData.exercises.map(exercise => ({
-                name: exercise.name,
-                sets: exercise.sets,
-                reps: exercise.reps,
-                completed: true
-            }))
-        };
+  if (pauseButton) {
+    pauseButton.addEventListener('click', () => workoutSession.togglePause());
+  }
 
-        // Save to workoutSessions collection
-        await firebase.firestore().collection('workoutSessions').add(sessionData);
-        
-        // Update UI with completion stats
-        document.getElementById('workoutDuration').textContent = formatDuration(duration);
-        document.getElementById('exercisesCompleted').textContent = workoutData.exercises.length;
+  if (skipButton) {
+    skipButton.addEventListener('click', () => workoutSession.skipExercise());
+  }
 
-        // Play random completion sound
-        const audioNumber = Math.floor(Math.random() * 3) + 1;
-        const audio = document.getElementById(`completionAudio${audioNumber}`);
-        if (audio) {
-            try {
-                console.log(`Playing completion sound ${audioNumber}`);
-                await audio.play();
-            } catch (error) {
-                console.error('Error playing audio:', error);
-            }
-        }
-
-        // Show completion popup with animation
-        showCompletionPopup();
-
-    } catch (error) {
-        console.error('Error saving workout session:', error);
-        alert('Error saving your workout progress. Please try again.');
-    }
-}
-
-function calculateWorkoutDuration() {
-    // Get workout start time from localStorage or use a default duration
-    const startTime = localStorage.getItem('workoutStartTime');
-    if (startTime) {
-        const duration = Date.now() - parseInt(startTime);
-        return Math.floor(duration / 1000); // Convert to seconds
-    }
-    return 0;
-}
-
-function formatDuration(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
-
-function showCompletionPopup() {
-    const popup = document.getElementById('completionPopup');
-    if (popup) {
-        popup.style.display = 'flex';
-        setTimeout(() => {
-            popup.classList.add('show');
-            createConfetti();
-        }, 100);
-    }
-}
-
-function closeCompletionPopup() {
-    const popup = document.getElementById('completionPopup');
-    if (popup) {
-        popup.classList.remove('show');
-        setTimeout(() => {
-            popup.style.display = 'none';
-            // Redirect to workout summary or home page
-            window.location.href = '../index.html';
-        }, 300);
-    }
-}
-
-function createConfetti() {
-    const container = document.querySelector('.confetti-container');
-    if (!container) return;
-
-    for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = 'confetti';
-        confetti.style.left = Math.random() * 100 + '%';
-        confetti.style.animationDelay = Math.random() * 3 + 's';
-        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-        container.appendChild(confetti);
-    }
-}
-
-// Add this CSS for confetti animation
-const style = document.createElement('style');
-style.textContent = `
-    .confetti {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        animation: confetti-fall 3s linear infinite;
-    }
-
-    @keyframes confetti-fall {
-        0% {
-            transform: translateY(-100%) rotate(0deg);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(1000%) rotate(720deg);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// Call completeWorkout when the workout is finished
-// Add this to your existing workout completion logic
-function finishWorkout() {
-    const workoutData = JSON.parse(localStorage.getItem('currentWorkout'));
-    if (workoutData) {
-        completeWorkout(workoutData);
-    }
-}
-
-// Initialize workout start time when the workout begins
-document.addEventListener('DOMContentLoaded', () => {
-    if (!localStorage.getItem('workoutStartTime')) {
-        localStorage.setItem('workoutStartTime', Date.now().toString());
-    }
+  if (previousButton) {
+    previousButton.addEventListener('click', () => workoutSession.previousExercise());
+  }
 });
