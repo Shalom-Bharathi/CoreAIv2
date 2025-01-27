@@ -218,7 +218,4 @@ window.analyzeImage = async () => {
     analyzeText.classList.remove('hidden');
     updateAnalyzeButton();
   }
-};
-
-// Add event listener for diet input
-document.getElementById('diet-input')?.addEventListener('input', updateAnalyzeButton); 
+}; 
