@@ -168,6 +168,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-left: 280px;
   padding: 2.5rem;
   position: relative;
+  max-width: 1600px;
 }
 
 /* Background Decoration */
@@ -221,7 +222,7 @@ h1, h2, h3, h4, h5, h6 {
   animation: fadeInUp 0.6s ease-out 0.2s backwards;
 }
 
-/* Card Grid Enhancement */
+/* Overview Cards spacing */
 .overview-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -345,7 +346,7 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
 }
 
-/* Macronutrient Rings Enhancement */
+/* Charts Grid spacing */
 .charts-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
@@ -434,40 +435,12 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0.25rem;
 }
 
-/* Meal Timeline Enhancement */
-.meal-timeline {
-  padding: 1.5rem;
-}
-
-.meal-time {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 1.25rem;
-  border-radius: 1rem;
-  background: var(--glass-background);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  transform: translateX(-20px);
-  animation: slideIn 0.5s ease forwards;
-  transition: all 0.3s ease;
-}
-
-.meal-time:hover {
-  transform: translateX(8px);
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-lg);
-}
-
-/* Guidelines Enhancement */
+/* Guidelines Grid spacing */
 .guidelines-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin: 3rem 0;
 }
 
 .guidelines-content {
@@ -522,12 +495,12 @@ h1, h2, h3, h4, h5, h6 {
   color: white;
 }
 
-/* Micronutrients Enhancement */
+/* Micro Grid spacing */
 .micro-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin: 3rem 0;
 }
 
 .nutrient-item {
@@ -568,12 +541,9 @@ h1, h2, h3, h4, h5, h6 {
   transition: color 0.3s ease;
 }
 
-/* Outcomes Enhancement */
-.outcomes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
+/* Outcomes Card spacing */
+.outcomes-card {
+  margin: 3rem 0;
 }
 
 .outcome-item {
@@ -599,31 +569,23 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--success);
 }
 
-/* Activity Tags Enhancement */
+/* Activity Recommendations spacing */
+.activity-recommendations {
+  margin: 3rem 0;
+}
+
 .activity-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-top: 1.5rem;
+  margin-top: 32px;
 }
 
 .activity-recommendation {
-  padding: 1.5rem;
-  border-radius: 1rem;
-  background: var(--glass-background);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
-  color: var(--primary);
-  font-weight: 500;
-  transition: all 0.3s ease;
+  padding: 28px;
+  margin-bottom: 24px;
 }
 
-.activity-recommendation:hover {
-  transform: translateY(-4px);
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-lg);
+.suggested-activities {
+  gap: 20px;
+  padding: 20px;
 }
 
 .activity-tag {
@@ -631,7 +593,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 2rem;
   background: var(--glass-background);
   backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
+  border: 2px solid transparent;
   color: var(--muted);
   font-size: 1rem;
   font-weight: 500;
@@ -640,10 +602,19 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .activity-tag:hover {
-  background: var(--gradient-primary);
-  color: white;
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-5px);
+  border: 2px solid var(--primary);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Guidelines section enhancement */
+.guidelines-section {
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.guidelines-content {
+  margin-top: 32px;
 }
 
 /* Enhanced Animations */
@@ -719,57 +690,58 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Responsive Enhancements */
+/* Responsive adjustments */
 @media (max-width: 1400px) {
   .overview-cards {
-      grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
   .charts-grid {
-      grid-template-columns: 1fr;
-  }
-  
-  .macro-ring {
-      width: 140px;
-      height: 140px;
+    grid-template-columns: 1fr;
+    gap: 3rem;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar {
-      width: 0;
-      transform: translateX(-100%);
+    width: 0;
+    transform: translateX(-100%);
   }
   
   .main-content {
-      margin-left: 0;
-      padding: 1.5rem;
+    margin-left: 0;
+    padding: 1.5rem;
   }
   
   .overview-cards,
   .guidelines-grid,
-  .micro-grid,
-  .activity-content {
-      grid-template-columns: 1fr;
+  .micro-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .guidelines-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
   
   .card {
-      padding: 1.5rem;
+    padding: 1.5rem;
   }
   
   .macro-ring {
-      width: 120px;
-      height: 120px;
+    width: 120px;
+    height: 120px;
   }
   
   .ring-label .percentage {
-      font-size: 1.5rem;
+    font-size: 1.5rem;
   }
   
   .dashboard-header h1 {
-      font-size: 2rem;
+    font-size: 2rem;
   }
 }
 
@@ -795,14 +767,14 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0.5rem;
     background: var(--glass-background);
     border-radius: 0.5rem;
-    border: 1px solid var(--glass-border);
+    border: 2px solid transparent;
     transition: all 0.3s ease;
 }
 
 .special-tip:hover {
-    transform: translateX(8px);
-    background: var(--primary-light);
-    border-color: var(--primary);
+    transform: translateY(-5px);
+    border: 2px solid var(--primary);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* Add Poppins font */
@@ -834,10 +806,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border: 2px solid transparent;
 }
 
 .meal-slot:hover {
-  transform: translateY(-5px) scale(1.02);
+  transform: translateY(-5px);
+  border: 2px solid var(--primary);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -879,32 +853,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Guidelines Section */
-.guidelines-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 32px;
-  margin-top: 32px;
-}
-
 .guidelines-card {
   background: #ffffff;
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.guidelines-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.guidelines-section {
-  background: linear-gradient(145deg, #f8f9ff 0%, #ffffff 100%);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+.guidelines-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--primary);
 }
 
 .guidelines-list {
@@ -923,11 +883,13 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
 .guidelines-list li:hover {
   transform: translateX(10px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--primary);
 }
 
 .guidelines-list li::before {
@@ -960,27 +922,19 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.special-tips-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--primary);
 }
 
 .special-tips-list {
   margin-top: 24px;
   display: grid;
   gap: 16px;
-}
-
-.special-tip {
-  background: linear-gradient(145deg, #f8f9ff 0%, #ffffff 100%);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.special-tip:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .special-tip::after {
@@ -1035,10 +989,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border: 2px solid transparent;
 }
 
 .activity-tag:hover {
   transform: translateY(-5px);
+  border: 2px solid var(--primary);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -1061,8 +1017,21 @@ h1, h2, h3, h4, h5, h6 {
 h3 {
   color: #1a237e;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   font-size: 1.25rem;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+h3::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
 }
 
 /* Animations */
