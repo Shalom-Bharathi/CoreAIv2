@@ -10,8 +10,19 @@ thingsRefx = db.collection('API');
 unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
   querySnapshot.docs.forEach(doc => {
     API_KEY = doc.data().API;
+    // Initialize OpenAI client after getting API key
+    initializeOpenAI();
   });
 });
+
+let openai;
+
+function initializeOpenAI() {
+  openai = new OpenAI({
+    apiKey: API_KEY,
+    dangerouslyAllowBrowser: true
+  });
+}
 
 // Camera handling
 window.toggleCamera = async () => {
@@ -124,58 +135,51 @@ window.analyzeImage = async () => {
   resultsSection.classList.add('hidden');
 
   try {
+    if (!openai) {
+      throw new Error('OpenAI client not initialized');
+    }
+
     // Get the user's diet type from the diet plan
     const user = firebase.auth().currentUser;
     const dietPlanDoc = await firebase.firestore().collection('dietPlans').doc(user.uid).get();
     const dietPlan = dietPlanDoc.data();
     const dietType = dietPlan?.diet_type || 'balanced';
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4-vision-preview",
-        messages: [
-          {
-            role: "user",
-            content: [
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-vision-preview",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this food image and provide a JSON response with the following information:
               {
-                type: "text",
-                text: `Analyze this food image and provide a JSON response with the following information:
-                {
-                  "foodName": "name of the dish",
-                  "ingredients": "list of main ingredients",
-                  "calories": "estimated calories here",
-                  "macronutrients": {
-                    "protein": "protein amount",
-                    "carbs": "carbs amount",
-                    "fat": "fat amount"
-                  },
-                  "dietCompatibility": "compatibility with ${dietType} diet and explanation"
-                }`
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: selectedImage
-                }
+                "foodName": "name of the dish",
+                "ingredients": "list of main ingredients",
+                "calories": "estimated calories here",
+                "macronutrients": {
+                  "protein": "protein amount",
+                  "carbs": "carbs amount",
+                  "fat": "fat amount"
+                },
+                "dietCompatibility": "compatibility with ${dietType} diet and explanation"
+              }`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: selectedImage
               }
-            ]
-          }
-        ],
-        max_tokens: 500
-      })
+            }
+          ]
+        }
+      ],
+      max_tokens: 500,
+      store: true
     });
 
-    if (!response.ok) {
-      throw new Error('OpenAI API request failed');
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    const content = response.choices[0]?.message?.content;
     
     if (!content) {
       throw new Error('No content in response');
