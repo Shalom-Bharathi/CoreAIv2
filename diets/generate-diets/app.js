@@ -478,6 +478,12 @@ async function generateDietPlan() {
   // Show loading state
   const loadingPopup = showLoadingPopup('Generating your personalized diet plan...');
   
+  if (!state.userResponses || state.userResponses.length === 0) {
+    loadingPopup.remove();
+    showError('No user responses found. Please try again.');
+    return;
+  }
+
   try {
     // Generate diet plan using OpenAI
     const prompt = `
