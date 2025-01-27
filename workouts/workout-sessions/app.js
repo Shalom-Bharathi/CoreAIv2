@@ -14,12 +14,42 @@ class WorkoutSession {
     this.music = document.getElementById('workoutMusic');
     this.isMusicPlaying = false;
     
+    // Add audio context and sounds state
+    this.audioContext = null;
+    this.soundsEnabled = false;
+    
     // Bind methods
     this.togglePause = this.togglePause.bind(this);
     this.skipExercise = this.skipExercise.bind(this);
     this.previousExercise = this.previousExercise.bind(this);
     this.toggleMusic = this.toggleMusic.bind(this);
     this.handleVolumeChange = this.handleVolumeChange.bind(this);
+    this.initializeAudio = this.initializeAudio.bind(this);
+  }
+
+  async initializeAudio() {
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.soundsEnabled = true;
+      
+      // Try to resume audio context
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      
+      // Pre-load all audio elements
+      const exerciseAudio = document.getElementById('exerciseStartAudio');
+      const breakAudio = document.getElementById('breakStartAudio');
+      const completionAudio = document.getElementById('completionAudio');
+      
+      if (exerciseAudio) exerciseAudio.load();
+      if (breakAudio) breakAudio.load();
+      if (completionAudio) completionAudio.load();
+      
+    } catch (error) {
+      console.error('Error initializing audio:', error);
+      this.soundsEnabled = false;
+    }
   }
 
   async initialize() {
@@ -35,8 +65,21 @@ class WorkoutSession {
       toggleMusicBtn.addEventListener('click', this.toggleMusic);
     }
 
-    // Load workout data
-    await this.loadWorkout();
+    // Add start button to the exercise display
+    const exerciseDisplay = document.querySelector('.exercise-display');
+    const startButton = document.createElement('button');
+    startButton.className = 'button-circle primary start-button';
+    startButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+    `;
+    startButton.addEventListener('click', async () => {
+      await this.initializeAudio();
+      startButton.remove();
+      this.loadWorkout();
+    });
+    exerciseDisplay.insertBefore(startButton, exerciseDisplay.firstChild);
   }
 
   handleVolumeChange(event) {
@@ -262,12 +305,14 @@ class WorkoutSession {
     clearInterval(this.calorieInterval);
     
     // Play completion sound
-    const completionAudio = document.getElementById('completionAudio');
-    if (completionAudio) {
-      try {
-        await completionAudio.play();
-      } catch (error) {
-        console.error('Error playing completion sound:', error);
+    if (this.soundsEnabled) {
+      const completionAudio = document.getElementById('completionAudio');
+      if (completionAudio) {
+        try {
+          await completionAudio.play();
+        } catch (error) {
+          console.error('Error playing completion sound:', error);
+        }
       }
     }
     
@@ -288,6 +333,10 @@ class WorkoutSession {
     }
 
     try {
+      // Calculate workout duration
+      const duration = Math.floor((Date.now() - this.startTime) / 1000);
+      
+      // Save workout completion to Firebase
       if (this.workout.id) {
         const db = firebase.firestore();
         await db.collection('workouts').doc(this.workout.id).update({
@@ -295,7 +344,25 @@ class WorkoutSession {
           completedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
-      window.location.href = '../';
+
+      // Update completion popup stats
+      document.getElementById('workoutDuration').textContent = this.formatTime(duration);
+      document.getElementById('exercisesCompleted').textContent = this.workout.exercises.length;
+      
+      // Show completion popup with confetti
+      const popup = document.getElementById('completionPopup');
+      if (popup) {
+        // Create confetti
+        for (let i = 0; i < 150; i++) {
+          createConfetti(popup.querySelector('.confetti-container'));
+        }
+        
+        // Show popup with animation
+        popup.style.display = 'flex';
+        setTimeout(() => {
+          popup.classList.add('show');
+        }, 100);
+      }
     } catch (error) {
       console.error('Error completing workout:', error);
       window.location.href = '../';
@@ -325,11 +392,20 @@ class WorkoutSession {
   }
 
   playExerciseStart() {
+    if (!this.soundsEnabled) return;
+    
     const audio = document.getElementById('exerciseStartAudio');
     if (audio) {
       try {
         audio.currentTime = 0;
-        audio.play().catch(error => console.error('Error playing exercise start sound:', error));
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.catch(error => {
+            if (error.name !== 'NotAllowedError') {
+              console.error('Error playing exercise start sound:', error);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error playing exercise start sound:', error);
       }
@@ -337,17 +413,49 @@ class WorkoutSession {
   }
 
   playBreakStart() {
+    if (!this.soundsEnabled) return;
+    
     const audio = document.getElementById('breakStartAudio');
     if (audio) {
       try {
         audio.currentTime = 0;
-        audio.play().catch(error => console.error('Error playing break start sound:', error));
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.catch(error => {
+            if (error.name !== 'NotAllowedError') {
+              console.error('Error playing break start sound:', error);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error playing break start sound:', error);
       }
     }
   }
 }
+
+// Add styles for the start button
+const style = document.createElement('style');
+style.textContent = `
+  .start-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px !important;
+    height: 80px !important;
+    background: var(--primary);
+    color: white;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+  
+  .start-button:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  }
+`;
+document.head.appendChild(style);
 
 // Initialize workout session
 const workoutSession = new WorkoutSession();
@@ -385,3 +493,161 @@ document.addEventListener('DOMContentLoaded', () => {
     previousButton.addEventListener('click', () => workoutSession.previousExercise());
   }
 });
+
+// Add confetti creation function
+function createConfetti(container) {
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  
+  // Random confetti properties
+  const colors = ['#FF477E', '#FF8C07', '#7EE787', '#A2D2FB', '#7C3AED'];
+  const randomRotation = Math.random() * 360;
+  const randomScale = Math.random() * 0.8 + 0.2;
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  const randomLeft = Math.random() * 100;
+  const randomDelay = Math.random() * 3;
+  
+  confetti.style.cssText = `
+    left: ${randomLeft}%;
+    transform: rotate(${randomRotation}deg) scale(${randomScale});
+    background-color: ${randomColor};
+    animation-delay: ${randomDelay}s;
+  `;
+  
+  container.appendChild(confetti);
+  
+  // Remove confetti after animation
+  confetti.addEventListener('animationend', () => {
+    confetti.remove();
+  });
+}
+
+// Add styles for confetti and popup
+const celebrationStyles = document.createElement('style');
+celebrationStyles.textContent = `
+  .completion-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .completion-popup.show {
+    opacity: 1;
+  }
+
+  .popup-content {
+    background: var(--card);
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    text-align: center;
+    position: relative;
+    max-width: 90%;
+    width: 400px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .completion-popup.show .popup-content {
+    transform: translateY(0);
+  }
+
+  .confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    border-radius: 2px;
+    animation: confetti-fall 4s linear forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    75% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .close-button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1.5rem;
+  }
+
+  .close-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .workout-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .stat {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+`;
+document.head.appendChild(celebrationStyles);
+
+// Add close popup function
+window.closeCompletionPopup = () => {
+  const popup = document.getElementById('completionPopup');
+  if (popup) {
+    popup.classList.remove('show');
+    setTimeout(() => {
+      popup.style.display = 'none';
+      window.location.href = '../';
+    }, 300);
+  }
+};
