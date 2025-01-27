@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
   
+  <!-- Load our app script first -->
+  <script src="./app.js"></script>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -33,11 +36,8 @@
       firebase.initializeApp(firebaseConfig);
     }
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // Check authentication state before loading dashboard
-    auth.onAuthStateChanged((user) => {
+    // Initialize auth and check state
+    firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
         console.log('No user found, redirecting to login...');
         window.location.href = '../../index.html';
@@ -50,7 +50,7 @@
 
     // Handle logout
     function handleLogout() {
-      auth.signOut().then(() => {
+      firebase.auth().signOut().then(() => {
         window.location.href = '../../index.html';
       }).catch((error) => {
         console.error('Logout error:', error);
@@ -61,9 +61,6 @@
   <!-- Other libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  
-  <!-- Load our app script -->
-  <script src="./app.js"></script>
 </head>
 <body>
   <div class="diet-container">

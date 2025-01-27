@@ -84,10 +84,15 @@ class DietDashboard {
 
   renderDietPlan(dietPlan) {
     try {
-      // Update diet type and goal
+      // Update diet type, name and description
       const dietTypeElement = document.querySelector('.diet-type');
       if (dietTypeElement) {
-        dietTypeElement.textContent = `${dietPlan.diet_type || 'Custom Diet'} - ${dietPlan.diet_goal || 'Balanced Nutrition'}`;
+        const dietName = dietPlan.name || dietPlan.diet_type || 'Custom Diet';
+        const dietGoal = dietPlan.description || dietPlan.diet_goal || 'Balanced Nutrition';
+        dietTypeElement.innerHTML = `
+          <h2>${dietName}</h2>
+          <p>${dietGoal}</p>
+        `;
       }
 
       // Update calories
