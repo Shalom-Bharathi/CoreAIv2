@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
   <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-  <title>CoreAI Diet Dashboard E </title>
+  <title>CoreAI Diet Dashboard </title>
   <link rel="stylesheet" href="./style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
@@ -118,31 +118,90 @@
           <div class="macro-sources"></div>
         </div>
 
-        <div class="chart-card meal-timing">
-          <h3>Meal Schedule</h3>
-          <div class="meal-timeline"></div>
+        <!-- Meal Timeline -->
+        <div class="meal-timing">
+          <h3>Daily Meal Schedule</h3>
+          <div class="meal-timeline">
+            <div class="meal-slot">
+              <div class="meal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+              </div>
+              <div class="meal-details">
+                <div class="meal-name">Breakfast</div>
+                <div class="meal-time">7-9 am</div>
+              </div>
+            </div>
+            <div class="meal-slot">
+              <div class="meal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="meal-details">
+                <div class="meal-name">Morning Snack</div>
+                <div class="meal-time">10-11 am</div>
+              </div>
+            </div>
+            <div class="meal-slot">
+              <div class="meal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 2 2 4 4 4h12c2 0 4-2 4-4V2"></path><line x1="3" y1="11" x2="23" y2="11"></line><path d="M12 19h7c2 0 4-2 4-4v-1"></path><path d="M3 15v1c0 2 2 4 4 4h3"></path></svg>
+              </div>
+              <div class="meal-details">
+                <div class="meal-name">Lunch</div>
+                <div class="meal-time">12-2 pm</div>
+              </div>
+            </div>
+            <div class="meal-slot">
+              <div class="meal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="meal-details">
+                <div class="meal-name">Afternoon Snack</div>
+                <div class="meal-time">3-4 pm</div>
+              </div>
+            </div>
+            <div class="meal-slot">
+              <div class="meal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 2 2 4 4 4h12c2 0 4-2 4-4V2"></path><line x1="3" y1="11" x2="23" y2="11"></line><path d="M12 19h7c2 0 4-2 4-4v-1"></path><path d="M3 15v1c0 2 2 4 4 4h3"></path></svg>
+              </div>
+              <div class="meal-details">
+                <div class="meal-name">Dinner</div>
+                <div class="meal-time">6-8 pm</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Guidelines and Tips -->
       <div class="guidelines-grid">
-        <div class="card guidelines-card">
+        <div class="guidelines-card">
           <h3>Dietary Guidelines</h3>
           <div class="guidelines-content">
-            <div class="dos-section">
+            <div class="guidelines-section">
               <h4>Do's</h4>
-              <ul class="guidelines-list dos-list"></ul>
+              <ul class="guidelines-list dos-list">
+                <li>Consume balanced meals</li>
+                <li>Eat fruits and vegetables daily</li>
+                <li>Stay hydrated</li>
+              </ul>
             </div>
-            <div class="donts-section">
+            <div class="guidelines-section">
               <h4>Don'ts</h4>
-              <ul class="guidelines-list donts-list"></ul>
+              <ul class="guidelines-list donts-list">
+                <li>Avoid sugary drinks</li>
+                <li>Don't skip meals</li>
+                <li>Avoid overeating</li>
+              </ul>
             </div>
           </div>
         </div>
 
-        <div class="card special-tips-card">
+        <div class="special-tips-card">
           <h3>Special Tips</h3>
-          <ul class="special-tips-list"></ul>
+          <ul class="special-tips-list">
+            <li class="special-tip">Start your day with a high-protein breakfast</li>
+            <li class="special-tip">Eat slowly</li>
+            <li class="special-tip">Keep a food diary</li>
+          </ul>
         </div>
       </div>
 
@@ -166,11 +225,17 @@
       </div>
 
       <!-- Physical Activity -->
-      <div class="card activity-recommendations">
+      <div class="activity-recommendations">
         <h3>Physical Activity Plan</h3>
         <div class="activity-content">
-          <div class="activity-recommendation"></div>
-          <div class="suggested-activities"></div>
+          <div class="activity-recommendation">
+            <p>Aim for at least 30 minutes of light activity daily, such as walking.</p>
+          </div>
+          <div class="suggested-activities">
+            <div class="activity-tag">Walking</div>
+            <div class="activity-tag">Yoga</div>
+            <div class="activity-tag">Stretching exercises</div>
+          </div>
         </div>
       </div>
     </main>
