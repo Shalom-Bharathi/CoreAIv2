@@ -517,6 +517,9 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 
   .camera-placeholder {
@@ -539,9 +542,12 @@
   }
 
   #image-preview-container {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    background: var(--background);
   }
 
   .clear-button {
@@ -559,6 +565,7 @@
     color: white;
     cursor: pointer;
     transition: all 0.2s;
+    z-index: 10;
   }
 
   .clear-button:hover {
