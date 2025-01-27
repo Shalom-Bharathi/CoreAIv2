@@ -58,6 +58,57 @@
       }
     });
   </script>
+
+  <!-- Add this in the head section after other scripts -->
+  <script>
+    var vapiInstance = null;
+    const assistant = "asst_nPAQfGhHVPnOOZQYGIjmEcZY";
+    const apiKey = "vapi_pk_3Ym4QXVYNPUgGBUYHhAZvJGV";
+    const buttonConfig = {
+      position: "bottom-right",
+      offset: "40px",
+      width: "50px",
+      height: "50px",
+      idle: {
+        color: `rgb(93, 254, 202)`,
+        type: "pill",
+        title: "Have a question about your diet?",
+        subtitle: "Talk with our AI nutritionist",
+        icon: `https://unpkg.com/lucide-static@0.321.0/icons/phone.svg`,
+      },
+      loading: {
+        color: `rgb(93, 124, 202)`,
+        type: "pill",
+        title: "Connecting...",
+        subtitle: "Please wait",
+        icon: `https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg`,
+      },
+      active: {
+        color: `rgb(255, 0, 0)`,
+        type: "pill",
+        title: "Call is in progress...",
+        subtitle: "End the call",
+        icon: `https://unpkg.com/lucide-static@0.321.0/icons/phone-off.svg`,
+      },
+    };
+
+    (function (d, t) {
+      var g = document.createElement(t),
+        s = d.getElementsByTagName(t)[0];
+      g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+      g.defer = true;
+      g.async = true;
+      s.parentNode.insertBefore(g, s);
+
+      g.onload = function () {
+        vapiInstance = window.vapiSDK.run({
+          apiKey: apiKey,
+          assistant: assistant,
+          config: buttonConfig,
+        });
+      };
+    })(document, "script");
+  </script>
 </head>
 <body>
   <div class="diet-container">
@@ -478,12 +529,22 @@
   </div>
 
   <style>
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --glass-backdrop: blur(12px);
+  }
+
   .food-analysis-section {
-    background: var(--card);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
     border-radius: 1.5rem;
     padding: 2.5rem;
     margin-top: 2.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--glass-shadow);
   }
 
   .section-header {
@@ -498,6 +559,7 @@
     background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.2));
   }
 
   .section-description {
@@ -509,10 +571,12 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16/9;
-    background: var(--background);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 2px dashed var(--glass-border);
     border-radius: 1rem;
     overflow: hidden;
-    border: 2px dashed var(--border);
   }
 
   #camera-preview,
@@ -531,17 +595,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--background);
+    background: var(--glass-bg);
   }
 
   .placeholder-content {
     text-align: center;
     color: var(--muted);
+    transform: translateY(-10px);
   }
 
   .placeholder-content svg {
     margin-bottom: 1rem;
     opacity: 0.5;
+    filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.2));
+    transition: all 0.3s ease;
   }
 
   #image-preview-container {
@@ -550,7 +617,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--background);
+    background: var(--glass-bg);
   }
 
   .clear-button {
@@ -595,19 +662,22 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1.5rem;
-    background: var(--background);
-    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
     border-radius: 0.75rem;
     color: var(--text);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
   }
 
   .control-button:hover,
   .upload-button:hover {
-    background: var(--border);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow);
   }
 
   .analyze-button {
@@ -617,12 +687,14 @@
     padding: 1rem 2rem;
     border: none;
     border-radius: 0.75rem;
-    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(79, 70, 229, 0.8) 100%);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
     color: white;
     font-weight: 600;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -631,17 +703,24 @@
 
   .analyze-button:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
   }
 
   .analyze-button:disabled {
-    background: var(--border);
+    background: var(--glass-border);
     cursor: not-allowed;
     opacity: 0.7;
   }
 
   .results-section {
     margin-top: 2rem;
+    transform-origin: top;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .results-section.hidden {
+    transform: translateY(-10px) scale(0.98);
+    opacity: 0;
   }
 
   .results-grid {
@@ -651,18 +730,21 @@
   }
 
   .result-card {
-    background: var(--background);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
     padding: 1.5rem;
     border-radius: 1rem;
-    border: 1px solid var(--border);
     display: flex;
     gap: 1rem;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
   }
 
   .result-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(31, 38, 135, 0.2);
   }
 
   .result-icon {
@@ -670,7 +752,9 @@
     width: 2.5rem;
     height: 2.5rem;
     padding: 0.5rem;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(99, 102, 241, 0.15);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
     border-radius: 0.75rem;
     color: var(--primary);
   }
@@ -724,16 +808,7 @@
   }
 
   #loading-spinner svg {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
   }
 
   @media (max-width: 768px) {
