@@ -771,18 +771,24 @@ async function saveDietPlan(dietPlan) {
         const user = firebase.auth().currentUser;
         if (!user) {
             console.error('No user logged in');
+            alert('Please log in to save your diet plan');
+            window.location.href = '../../index.html';
             return;
         }
 
-        console.log('Current user:', user.email);
-        console.log('Saving diet plan:', dietPlan);
+        console.log('Current user:', user.email, 'UID:', user.uid);
+        console.log('Original diet plan:', dietPlan);
 
         // Add user ID and timestamp to diet plan
         const dietPlanWithUser = {
             ...dietPlan,
             userId: user.uid,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            userEmail: user.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: new Date().toISOString()
         };
+
+        console.log('Saving diet plan with user data:', dietPlanWithUser);
 
         // Save to dietPlan collection
         const docRef = await firebase.firestore().collection('dietPlan')
@@ -790,21 +796,33 @@ async function saveDietPlan(dietPlan) {
         
         console.log('Diet plan saved to dietPlan collection with ID:', docRef.id);
         
-        // Also update the user's document with the latest diet plan
+        // Also update the user's document with the latest diet plan and the document ID
+        const userDietPlan = {
+            ...dietPlanWithUser,
+            planId: docRef.id  // Include the document ID for reference
+        };
+
         await firebase.firestore().collection('users')
             .doc(user.uid)
             .set({
-                dietPlan: dietPlanWithUser,
+                dietPlan: userDietPlan,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         
-        console.log('Diet plan saved to user document');
+        console.log('Diet plan saved to user document with reference ID');
         
-        // Wait a moment to ensure Firestore updates are complete
-        setTimeout(() => {
-            console.log('Redirecting to diet home page...');
-            window.location.href = '../diet-home/index.html';
-        }, 1000);
+        // Verify the save was successful
+        const savedPlan = await docRef.get();
+        if (savedPlan.exists) {
+            alert('Verified diet plan was saved:', savedPlan.data());
+            // Wait a moment to ensure Firestore updates are complete
+            setTimeout(() => {
+                console.log('Redirecting to diet home page...');
+                window.location.href = '../diet-home/index.html';
+            }, 1000);
+        } else {
+            throw new Error('Diet plan was not saved properly');
+        }
     } catch (error) {
         console.error('Error saving diet plan:', error);
         alert('Failed to save diet plan. Please try again.');
