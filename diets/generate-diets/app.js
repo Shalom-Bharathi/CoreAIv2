@@ -768,7 +768,7 @@ document.head.appendChild(link);
 
 async function saveDietPlan(dietPlan) {
     try {
-        await db.collection('dietPlans').add({
+        await db.collection('dietPlan').add({
             ...dietPlan,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });

@@ -5,14 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
   <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-  <title>CoreAI Diet Dashboard </title>
+  <title>CoreAI Diet Dashboard</title>
   <link rel="stylesheet" href="./style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
   
-  <!-- Load our app script first -->
-  <script src="./app.js"></script>
-
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -35,7 +32,17 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
+  </script>
 
+  <!-- Other libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <!-- Load our app script after Firebase is initialized -->
+  <script src="./app.js"></script>
+  
+  <!-- Initialize auth check after app is loaded -->
+  <script>
     // Initialize auth and check state
     firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
@@ -47,20 +54,7 @@
         window.dietDashboard = new DietDashboard(user);
       }
     });
-
-    // Handle logout
-    function handleLogout() {
-      firebase.auth().signOut().then(() => {
-        window.location.href = '../../index.html';
-      }).catch((error) => {
-        console.error('Logout error:', error);
-      });
-    }
   </script>
-  
-  <!-- Other libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
   <div class="diet-container">
