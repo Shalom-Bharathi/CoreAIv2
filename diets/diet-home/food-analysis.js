@@ -10,19 +10,8 @@ thingsRefx = db.collection('API');
 unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
   querySnapshot.docs.forEach(doc => {
     API_KEY = doc.data().API;
-    // Initialize OpenAI client after getting API key
-    initializeOpenAI();
   });
 });
-
-let openai;
-
-function initializeOpenAI() {
-  openai = new OpenAI({
-    apiKey: API_KEY,
-    dangerouslyAllowBrowser: true
-  });
-}
 
 // Camera handling
 window.toggleCamera = async () => {
