@@ -30,10 +30,10 @@
 
     // Initialize Firebase
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     }
   </script>
-
+  
   <!-- Other libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -270,11 +270,11 @@
         </div>
       </div>
 
-      <!-- Replace the food analysis section with this updated version -->
+      <!-- Update the food analysis section -->
       <div class="food-analysis-section">
         <div class="section-header">
           <h2 class="section-title">Food Analysis</h2>
-          <p class="section-description">Take a photo or upload an image of your food to check if it aligns with your diet plan</p>
+          <p class="section-description">Take a photo or upload an image of your food to analyze its nutritional content and compatibility with your diet plan.</p>
         </div>
         
         <div class="analysis-container">
@@ -299,15 +299,15 @@
 
           <div class="controls-section">
             <div class="input-group">
-              <button onclick="toggleCamera()" id="camera-toggle" class="control-button primary-button">
+              <button onclick="toggleCamera()" id="camera-toggle" class="control-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                   <circle cx="12" cy="13" r="3"/>
                 </svg>
-                Take Photo
+                Open Camera
               </button>
               
-              <button id="capture-button" onclick="captureImage()" class="control-button primary-button hidden">
+              <button id="capture-button" onclick="captureImage()" class="control-button hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <circle cx="12" cy="12" r="3"/>
@@ -315,7 +315,7 @@
                 Capture
               </button>
 
-              <label class="upload-button secondary-button">
+              <label class="upload-button">
                 <input type="file" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -337,37 +337,43 @@
           </div>
 
           <div id="results-section" class="results-section hidden">
-            <div class="result-card food-name-card">
-              <div class="result-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
+            <div class="results-grid">
+              <div class="result-card food-name-card">
+                <div class="result-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 2h16a2 2 0 0 1 2 2v2H1V4a2 2 0 0 1 2-2z"/>
+                    <path d="M1 8h22v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8z"/>
+                    <path d="M12 12h.01"/>
+                  </svg>
+                </div>
+                <div class="result-content">
+                  <h3>Food Name</h3>
+                  <p id="food-name-result">-</p>
+                </div>
               </div>
-              <div class="result-content">
-                <h3>Food Name</h3>
-                <p id="food-name-result">-</p>
-              </div>
-            </div>
-            
-            <div class="result-card ingredients-card">
-              <div class="result-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3h18v18H3z"/>
-                  <path d="M8 12h8"/>
-                  <path d="M12 8v8"/>
-                </svg>
-              </div>
-              <div class="result-content">
-                <h3>Ingredients</h3>
-                <p id="ingredients-result">-</p>
-              </div>
-            </div>
 
-            <div class="nutrition-grid">
+              <div class="result-card ingredients-card">
+                <div class="result-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v18"/>
+                    <path d="M5 10h14"/>
+                    <path d="M15 6l-3-3-3 3"/>
+                    <path d="M9 18l3 3 3-3"/>
+                  </svg>
+                </div>
+                <div class="result-content">
+                  <h3>Ingredients</h3>
+                  <p id="ingredients-result">-</p>
+                </div>
+              </div>
+
               <div class="result-card calories-card">
                 <div class="result-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2v20M2 12h20"/>
+                    <path d="M12 2v20"/>
+                    <path d="M2 12h20"/>
+                    <path d="m4.93 4.93 14.14 14.14"/>
+                    <path d="m19.07 4.93-14.14 14.14"/>
                   </svg>
                 </div>
                 <div class="result-content">
@@ -379,10 +385,8 @@
               <div class="result-card macros-card">
                 <div class="result-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                    <line x1="9" y1="9" x2="9.01" y2="9"/>
-                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    <path d="M3 3v18h18"/>
+                    <path d="m19 9-5 5-4-4-3 3"/>
                   </svg>
                 </div>
                 <div class="result-content">
@@ -403,18 +407,18 @@
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="result-card compatibility-card">
-              <div class="result-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <div class="result-content">
-                <h3>Diet Compatibility</h3>
-                <p id="diet-result">-</p>
+              <div class="result-card diet-card">
+                <div class="result-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <div class="result-content">
+                  <h3>Diet Compatibility</h3>
+                  <p id="diet-result">-</p>
+                </div>
               </div>
             </div>
           </div>
@@ -474,12 +478,12 @@
   }
 
   .section-header {
-    text-align: center;
     margin-bottom: 2rem;
+    text-align: center;
   }
 
   .section-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
     background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
@@ -490,6 +494,7 @@
   .section-description {
     color: var(--muted);
     font-size: 1.1rem;
+    line-height: 1.6;
   }
 
   .camera-section {
@@ -514,12 +519,9 @@
     justify-content: center;
     gap: 1rem;
     color: var(--muted);
-    padding: 2rem;
-    text-align: center;
   }
 
   .camera-placeholder svg {
-    color: var(--primary);
     opacity: 0.5;
   }
 
@@ -528,7 +530,7 @@
   }
 
   .controls-section {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -545,41 +547,25 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1.5rem;
+    background: var(--background);
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
-    font-weight: 600;
+    color: var(--text);
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 1rem;
   }
 
-  .primary-button {
-    background: var(--primary);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
-  }
-
-  .primary-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px -1px rgba(99, 102, 241, 0.3);
-  }
-
-  .secondary-button {
-    background: var(--background);
-    color: var(--text);
-    border: 2px solid var(--border);
-  }
-
-  .secondary-button:hover {
+  .control-button:hover, .upload-button:hover {
     background: var(--border);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
   .analyze-button {
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 1rem 2rem;
     border: none;
     border-radius: 0.75rem;
     background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
@@ -592,27 +578,26 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
   }
 
   .analyze-button:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 8px -1px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
   }
 
   .analyze-button:disabled {
     background: var(--border);
     cursor: not-allowed;
-    box-shadow: none;
   }
 
   .results-section {
     margin-top: 2rem;
-    display: flex;
-    flex-direction: column;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
-    opacity: 0;
-    transition: all 0.3s ease-in-out;
   }
 
   .result-card {
@@ -621,20 +606,20 @@
     border-radius: 1rem;
     border: 1px solid var(--border);
     display: flex;
-    gap: 1.25rem;
-    transition: transform 0.2s;
+    gap: 1rem;
+    transition: all 0.2s;
   }
 
   .result-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   .result-icon {
-    color: var(--primary);
-    background: rgba(99, 102, 241, 0.1);
     padding: 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
     border-radius: 0.75rem;
-    height: fit-content;
+    color: var(--primary);
   }
 
   .result-content {
@@ -653,24 +638,14 @@
     line-height: 1.6;
   }
 
-  .nutrition-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-
   .macro-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    margin-top: 0.75rem;
   }
 
   .macro-item {
     text-align: center;
-    padding: 0.75rem;
-    background: var(--card);
-    border-radius: 0.5rem;
   }
 
   .macro-label {
@@ -681,17 +656,17 @@
   }
 
   .macro-value {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text);
-  }
-
-  .compatibility-card {
-    background: linear-gradient(to right, var(--background), rgba(99, 102, 241, 0.05));
   }
 
   @media (max-width: 768px) {
     .food-analysis-section {
       padding: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
     }
 
     .input-group {
@@ -702,7 +677,7 @@
       width: 100%;
     }
 
-    .nutrition-grid {
+    .results-grid {
       grid-template-columns: 1fr;
     }
   }

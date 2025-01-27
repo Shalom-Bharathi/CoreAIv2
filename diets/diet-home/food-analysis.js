@@ -1,26 +1,5 @@
 let stream = null;
 let selectedImage = null;
-let userDietType = null;
-
-// Initialize Firebase listener for diet type
-const initializeDietListener = () => {
-  const auth = firebase.auth();
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      const db = firebase.firestore();
-      db.collection('users').doc(user.uid).get()
-        .then(doc => {
-          if (doc.exists && doc.data().diet_details) {
-            userDietType = doc.data().diet_details.diet_type;
-            console.log('Diet type loaded:', userDietType);
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching diet type:', error);
-        });
-    }
-  });
-};
 
 // Camera handling
 window.toggleCamera = async () => {
@@ -63,16 +42,14 @@ const stopCamera = () => {
   }
   document.getElementById('camera-preview').classList.add('hidden');
   document.getElementById('capture-button').classList.add('hidden');
+  document.getElementById('camera-placeholder').classList.remove('hidden');
   document.getElementById('camera-toggle').innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
       <circle cx="12" cy="13" r="3"/>
     </svg>
-    Take Photo
+    Open Camera
   `;
-  if (!selectedImage) {
-    document.getElementById('camera-placeholder').classList.remove('hidden');
-  }
 };
 
 window.captureImage = () => {
@@ -114,17 +91,13 @@ window.clearImage = () => {
 };
 
 const updateAnalyzeButton = () => {
-  const canAnalyze = selectedImage && userDietType;
   const analyzeButton = document.getElementById('analyze-button');
-  analyzeButton.disabled = !canAnalyze;
-  analyzeButton.className = `analyze-button ${!canAnalyze ? 'disabled' : ''}`;
+  analyzeButton.disabled = !selectedImage;
+  analyzeButton.className = `analyze-button ${!selectedImage ? 'disabled' : ''}`;
 };
 
 window.analyzeImage = async () => {
-  if (!selectedImage || !userDietType) {
-    alert('Please ensure you have selected an image and your diet type is loaded.');
-    return;
-  }
+  if (!selectedImage) return;
 
   const analyzeButton = document.getElementById('analyze-button');
   const loadingSpinner = document.getElementById('loading-spinner');
@@ -139,6 +112,12 @@ window.analyzeImage = async () => {
   resultsSection.classList.add('hidden');
 
   try {
+    // Get the user's diet type from the diet plan
+    const user = firebase.auth().currentUser;
+    const dietPlanDoc = await firebase.firestore().collection('dietPlans').doc(user.uid).get();
+    const dietPlan = dietPlanDoc.data();
+    const dietType = dietPlan?.diet_type || 'balanced';
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -163,7 +142,7 @@ window.analyzeImage = async () => {
                     "carbs": "carbs amount",
                     "fat": "fat amount"
                   },
-                  "dietCompatibility": "compatibility with ${userDietType} diet and explanation"
+                  "dietCompatibility": "compatibility with ${dietType} diet and explanation"
                 }`
               },
               {
@@ -241,5 +220,5 @@ window.analyzeImage = async () => {
   }
 };
 
-// Initialize the diet listener when the page loads
-document.addEventListener('DOMContentLoaded', initializeDietListener); 
+// Add event listener for diet input
+document.getElementById('diet-input')?.addEventListener('input', updateAnalyzeButton); 
