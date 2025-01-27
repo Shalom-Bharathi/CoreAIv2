@@ -11,6 +11,8 @@ class WorkoutSession {
     this.totalSets = 1;
     this.startTime = null;
     this.calorieInterval = null;
+    this.music = null;
+    this.isMusicPlaying = false;
   }
 
   processWorkoutData(workoutData) {
@@ -87,6 +89,7 @@ class WorkoutSession {
     this.updateTimer();
     this.startTimer();
     this.calculateTotalTimeLeft();
+    this.playExerciseStart();
   }
 
   updateExerciseDisplay(exercise) {
@@ -145,6 +148,7 @@ class WorkoutSession {
             this.isResting = false;
             this.timeRemaining = exercise.duration;
             this.updateExerciseDisplay(exercise);
+            this.playExerciseStart();
           } else if (this.currentExerciseIndex < this.workout.exercises.length - 1) {
             this.startExercise(this.currentExerciseIndex + 1);
           } else {
@@ -154,6 +158,7 @@ class WorkoutSession {
           this.isResting = true;
           this.timeRemaining = exercise.rest;
           this.updateTimer();
+          this.playBreakStart();
         }
       }
     }, 1000);
@@ -178,6 +183,23 @@ class WorkoutSession {
   async completeWorkout() {
     clearInterval(this.timer);
     clearInterval(this.calorieInterval);
+    
+    // Fade out and stop the music
+    if (this.music && this.isMusicPlaying) {
+      const fadeOut = setInterval(() => {
+        if (this.music.volume > 0.1) {
+          this.music.volume -= 0.1;
+        } else {
+          clearInterval(fadeOut);
+          this.music.pause();
+          this.music.currentTime = 0;
+          this.isMusicPlaying = false;
+          const toggleBtn = document.getElementById('toggleMusicBtn');
+          toggleBtn?.classList.remove('playing');
+        }
+      }, 100);
+    }
+
     try {
       if (this.workout.id) {
         await db.collection('workouts').doc(this.workout.id).update({
@@ -218,6 +240,11 @@ class WorkoutSession {
     this.calorieInterval = setInterval(() => this.updateCalories(), 60000);
     this.startExercise(0);
     document.getElementById('startWorkoutBtn').style.display = 'none';
+    
+    // Start the music when workout begins
+    if (this.music && !this.isMusicPlaying) {
+      this.toggleMusic();
+    }
   }
 
   calculateTotalTimeLeft() {
@@ -241,6 +268,74 @@ class WorkoutSession {
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
+
+  playExerciseStart() {
+    const audio = document.getElementById('exerciseStartAudio');
+    if (audio) {
+      try {
+        audio.currentTime = 0;
+        audio.play();
+      } catch (error) {
+        console.error('Error playing exercise start sound:', error);
+      }
+    }
+  }
+
+  playBreakStart() {
+    const audio = document.getElementById('breakStartAudio');
+    if (audio) {
+      try {
+        audio.currentTime = 0;
+        audio.play();
+      } catch (error) {
+        console.error('Error playing break start sound:', error);
+      }
+    }
+  }
+
+  initializeMusic() {
+    this.music = document.getElementById('workoutMusic');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const toggleMusicBtn = document.getElementById('toggleMusicBtn');
+
+    if (this.music && volumeSlider) {
+      this.music.volume = volumeSlider.value / 100;
+    }
+
+    volumeSlider?.addEventListener('input', (e) => {
+      if (this.music) {
+        this.music.volume = e.target.value / 100;
+      }
+    });
+
+    toggleMusicBtn?.addEventListener('click', () => this.toggleMusic());
+
+    volumeSlider?.addEventListener('change', () => {
+      localStorage.setItem('workoutMusicVolume', volumeSlider.value);
+    });
+
+    const savedVolume = localStorage.getItem('workoutMusicVolume');
+    if (savedVolume && volumeSlider) {
+      volumeSlider.value = savedVolume;
+      if (this.music) {
+        this.music.volume = savedVolume / 100;
+      }
+    }
+  }
+
+  toggleMusic() {
+    const toggleBtn = document.getElementById('toggleMusicBtn');
+    if (!this.music) return;
+
+    if (this.isMusicPlaying) {
+      this.music.pause();
+      toggleBtn?.classList.remove('playing');
+    } else {
+      this.music.play();
+      toggleBtn?.classList.add('playing');
+    }
+    this.isMusicPlaying = !this.isMusicPlaying;
+  }
 }
 
 // Initialize workout session
@@ -253,5 +348,159 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('skipButton').addEventListener('click', () => workoutSession.skipExercise());
   document.getElementById('previousButton').addEventListener('click', () => workoutSession.previousExercise());
   document.getElementById('startWorkoutBtn').addEventListener('click', () => workoutSession.startWorkout());
+  
+  // Initialize music player
+  workoutSession.initializeMusic();
+  
   workoutSession.loadWorkout();
+});
+
+// Add these functions to handle workout completion
+
+async function completeWorkout(workoutData) {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.error('No user logged in');
+            return;
+        }
+
+        // Calculate workout duration
+        const duration = calculateWorkoutDuration();
+        
+        // Prepare workout session data
+        const sessionData = {
+            userId: user.uid,
+            userEmail: user.email,
+            workoutId: workoutData.id,
+            workoutName: workoutData.name,
+            completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            duration: duration,
+            exercisesCompleted: workoutData.exercises.length,
+            exercises: workoutData.exercises.map(exercise => ({
+                name: exercise.name,
+                sets: exercise.sets,
+                reps: exercise.reps,
+                completed: true
+            }))
+        };
+
+        // Save to workoutSessions collection
+        await firebase.firestore().collection('workoutSessions').add(sessionData);
+        
+        // Update UI with completion stats
+        document.getElementById('workoutDuration').textContent = formatDuration(duration);
+        document.getElementById('exercisesCompleted').textContent = workoutData.exercises.length;
+
+        // Play random completion sound
+        const audioNumber = Math.floor(Math.random() * 3) + 1;
+        const audio = document.getElementById(`completionAudio${audioNumber}`);
+        if (audio) {
+            try {
+                console.log(`Playing completion sound ${audioNumber}`);
+                await audio.play();
+            } catch (error) {
+                console.error('Error playing audio:', error);
+            }
+        }
+
+        // Show completion popup with animation
+        showCompletionPopup();
+
+    } catch (error) {
+        console.error('Error saving workout session:', error);
+        alert('Error saving your workout progress. Please try again.');
+    }
+}
+
+function calculateWorkoutDuration() {
+    // Get workout start time from localStorage or use a default duration
+    const startTime = localStorage.getItem('workoutStartTime');
+    if (startTime) {
+        const duration = Date.now() - parseInt(startTime);
+        return Math.floor(duration / 1000); // Convert to seconds
+    }
+    return 0;
+}
+
+function formatDuration(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function showCompletionPopup() {
+    const popup = document.getElementById('completionPopup');
+    if (popup) {
+        popup.style.display = 'flex';
+        setTimeout(() => {
+            popup.classList.add('show');
+            createConfetti();
+        }, 100);
+    }
+}
+
+function closeCompletionPopup() {
+    const popup = document.getElementById('completionPopup');
+    if (popup) {
+        popup.classList.remove('show');
+        setTimeout(() => {
+            popup.style.display = 'none';
+            // Redirect to workout summary or home page
+            window.location.href = '../index.html';
+        }, 300);
+    }
+}
+
+function createConfetti() {
+    const container = document.querySelector('.confetti-container');
+    if (!container) return;
+
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        container.appendChild(confetti);
+    }
+}
+
+// Add this CSS for confetti animation
+const style = document.createElement('style');
+style.textContent = `
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        animation: confetti-fall 3s linear infinite;
+    }
+
+    @keyframes confetti-fall {
+        0% {
+            transform: translateY(-100%) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(1000%) rotate(720deg);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Call completeWorkout when the workout is finished
+// Add this to your existing workout completion logic
+function finishWorkout() {
+    const workoutData = JSON.parse(localStorage.getItem('currentWorkout'));
+    if (workoutData) {
+        completeWorkout(workoutData);
+    }
+}
+
+// Initialize workout start time when the workout begins
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('workoutStartTime')) {
+        localStorage.setItem('workoutStartTime', Date.now().toString());
+    }
 });

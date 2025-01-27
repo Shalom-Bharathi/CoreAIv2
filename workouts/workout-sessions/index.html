@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
-  <script>
+  <script>  
     const firebaseConfig = {
       apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
       authDomain: "coreai-82c79.firebaseapp.com",
@@ -37,6 +37,14 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
   });
 });
     </script>
+  <!-- Motivational completion voice messages -->
+  <audio id="completionAudio1" src="../../assets/completionAudio1.mp3" preload="auto"></audio>
+  <audio id="completionAudio2" src="../../assets/completionAudio2.mp3" preload="auto"></audio>
+  <audio id="completionAudio3" src="../../assets/completionAudio3.mp3" preload="auto"></audio>
+  
+  <!-- Exercise transition sounds -->
+  <audio id="exerciseStartAudio" src="../../assets/exercise.mp3" preload="auto"></audio>
+  <audio id="breakStartAudio" src="../../assets/break.mp3" preload="auto"></audio>
 </head>
 
 <body>
@@ -155,9 +163,57 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
               </div>
             </div>
           </div>
+
+          <!-- Add this after the workout-stats div in the workout-sidebar -->
+          <div class="music-player">
+            <h3>Workout Music</h3>
+            <audio id="workoutMusic" src="../../assets/workout-music.mp3" loop></audio>
+            <div class="music-controls">
+              <div class="music-info">
+                <div class="music-title">Workout Mix</div>
+                <div class="volume-control">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="volume-icon">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                  </svg>
+                  <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+                </div>
+              </div>
+              <div class="music-buttons">
+                <button id="toggleMusicBtn" class="music-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Add this before closing </body> -->
+  <div id="completionPopup" class="completion-popup" style="display: none;">
+    <div class="popup-content">
+      <div class="confetti-container">
+        <!-- Confetti animation will be added here -->
+      </div>
+      <h2>Congratulations! 🎉</h2>
+      <p>You've completed your workout session!</p>
+      <div class="workout-stats">
+        <div class="stat">
+          <span class="stat-label">Duration</span>
+          <span class="stat-value" id="workoutDuration">0:00</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Exercises Completed</span>
+          <span class="stat-value" id="exercisesCompleted">0</span>
+        </div>
+      </div>
+      <button class="close-button" onclick="closeCompletionPopup()">Continue</button>
+    </div>
   </div>
 
   <style>
@@ -174,26 +230,44 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
       height: 100vh;
       gap: 1px;
       background: var(--border);
+      position: relative;
     }
 
     .workout-section {
       background: var(--background);
-      padding: 2rem;
+      padding: 2.5rem;
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: 2.5rem;
     }
 
     .session-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 2rem;
+      gap: 2.5rem;
+      padding: 1rem;
+      background: var(--card);
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .workout-progress {
       display: flex;
-      gap: 1.5rem;
+      gap: 2rem;
+      padding: 1rem;
+      background: var(--background);
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
     }
 
     .progress-stat {
@@ -201,11 +275,21 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: var(--card);
+      border-radius: 0.5rem;
+      min-width: 120px;
+      transition: transform 0.2s;
+    }
+
+    .progress-stat:hover {
+      transform: translateY(-2px);
     }
 
     .stat-label {
       font-size: 0.875rem;
       color: var(--muted);
+      font-weight: 500;
     }
 
     .stat-value {
@@ -219,26 +303,30 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2rem;
-      padding: 2rem;
+      gap: 2.5rem;
+      padding: 2.5rem;
       background: var(--card);
-      border-radius: 1rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
     }
 
     .timer-section {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: 220px;
+      height: 220px;
+      margin: 1rem 0;
     }
 
     .timer-ring {
       position: relative;
+      filter: drop-shadow(0 4px 10px rgba(99, 102, 241, 0.2));
     }
 
     .progress-ring-circle {
       transition: stroke-dashoffset 0.35s;
       transform: rotate(-90deg);
       transform-origin: 50% 50%;
+      stroke: var(--primary);
     }
 
     .timer-display {
@@ -246,9 +334,22 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 2.5rem;
+      text-align: center;
+    }
+
+    .timer-display #timeRemaining {
+      font-size: 3rem;
       font-weight: 700;
       color: var(--text);
+      display: block;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .timer-display #timerPhase {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 500;
     }
 
     .exercise-info {
@@ -257,41 +358,51 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
     }
 
     .exercise-card {
-      padding: 2rem;
+      padding: 2.5rem;
       background: var(--background);
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .exercise-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1);
     }
 
     .exercise-name {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      color: var(--text);
     }
 
     .exercise-instructions {
       color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 1rem;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
     }
 
     .exercise-meta {
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.5rem;
       color: var(--primary);
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 1.1rem;
     }
 
     .control-buttons {
       display: flex;
-      gap: 1rem;
+      gap: 1.5rem;
       margin-top: auto;
     }
 
     .button-circle {
-      width: 3.5rem;
-      height: 3.5rem;
+      width: 4rem;
+      height: 4rem;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -304,24 +415,29 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
     .button-circle.primary {
       background: var(--primary);
       color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
 
     .button-circle.secondary {
-      background: var(--background);
+      background: var(--card);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 2px solid var(--border);
     }
 
     .button-circle:hover {
-      transform: scale(1.05);
+      transform: scale(1.1);
+    }
+
+    .button-circle.primary:hover {
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
     }
 
     .workout-sidebar {
       background: var(--background);
-      padding: 2rem;
+      padding: 2.5rem;
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: 2.5rem;
       border-left: 1px solid var(--border);
     }
 
@@ -329,43 +445,78 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
       flex: 1;
     }
 
+    .upcoming-exercises h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
     .exercise-list {
-      margin-top: 1rem;
+      margin-top: 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.25rem;
     }
 
     .upcoming-exercise {
-      padding: 1rem;
+      padding: 1.25rem;
       background: var(--card);
-      border-radius: 0.75rem;
+      border-radius: 1rem;
       border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .upcoming-exercise:hover {
+      transform: translateX(4px);
+      border-color: var(--primary);
     }
 
     .upcoming-exercise.next {
       border-color: var(--primary);
+      background: linear-gradient(to right, var(--card), rgba(99, 102, 241, 0.05));
+    }
+
+    .upcoming-exercise h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .upcoming-exercise p {
+      color: var(--muted);
+      font-size: 0.9rem;
     }
 
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 1.25rem;
+      margin-top: 1.25rem;
     }
 
     .stat-card {
-      padding: 1rem;
+      padding: 1.25rem;
       background: var(--card);
-      border-radius: 0.75rem;
+      border-radius: 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      transition: transform 0.2s ease;
+      border: 1px solid var(--border);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
     }
 
     .stat-icon {
       color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+      padding: 0.75rem;
+      border-radius: 0.75rem;
     }
 
     @media (max-width: 1024px) {
@@ -375,6 +526,23 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
 
       .workout-sidebar {
         display: none;
+      }
+
+      .workout-section {
+        padding: 1.5rem;
+      }
+
+      .exercise-display {
+        padding: 1.5rem;
+      }
+
+      .timer-section {
+        width: 180px;
+        height: 180px;
+      }
+
+      .timer-display #timeRemaining {
+        font-size: 2.5rem;
       }
     }
 
@@ -396,6 +564,181 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
     
     .primary-button:hover {
       background-color: #45a049;
+    }
+
+    .completion-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .completion-popup.show {
+      opacity: 1;
+    }
+
+    .popup-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: center;
+      position: relative;
+      max-width: 90%;
+      width: 400px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .completion-popup.show .popup-content {
+      transform: translateY(0);
+    }
+
+    .workout-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .stat {
+      background: #f8fafc;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .close-button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .close-button:hover {
+      background: #4f46e5;
+    }
+
+    .confetti-container {
+      position: absolute;
+      top: -20px;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .music-player {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .music-player h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .music-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .music-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .music-title {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      background: var(--background);
+      border-radius: 0.5rem;
+    }
+
+    .volume-icon {
+      color: var(--primary);
+    }
+
+    .volume-slider {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .music-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .music-button {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .music-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .music-button.playing svg {
+      display: none;
+    }
+
+    .music-button.playing::before {
+      content: "⏸";
+      font-size: 1.25rem;
     }
   </style>
 
