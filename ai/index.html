@@ -108,6 +108,18 @@
           </ul>
         </div>
       </div>
+
+      <!-- Add these canvas elements in the appropriate section -->
+      <div class="charts-container">
+        <div class="chart-card">
+          <h3>Training Accuracy</h3>
+          <canvas id="accuracyChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Training Loss</h3>
+          <canvas id="lossChart"></canvas>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -143,5 +155,36 @@
       });
     });
   </script>
+
+  <style>
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .chart-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      border: 1px solid var(--glass-border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .chart-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+  </style>
 </body>
 </html>

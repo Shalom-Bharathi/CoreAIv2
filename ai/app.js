@@ -43,60 +43,58 @@ const data = {
   
   // Initialize Charts
   function initializeCharts() {
-    // Fitness Progress Chart
-    const fitnessCtx = document.getElementById('fitnessChart').getContext('2d');
-    new Chart(fitnessCtx, {
+    // Wait for DOM to be fully loaded
+    if (!document.getElementById('accuracyChart')) {
+      console.warn('Charts container not found, skipping chart initialization');
+      return;
+    }
+
+    const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+    const lossCtx = document.getElementById('lossChart').getContext('2d');
+    
+    // Accuracy Chart
+    accuracyChart = new Chart(accuracyCtx, {
       type: 'line',
       data: {
-        labels: data.weekly.map(d => d.name),
+        labels: [],
         datasets: [{
-          data: data.weekly.map(d => d.value),
-          borderColor: '#4f46e5',
-          backgroundColor: 'rgba(79, 70, 229, 0.1)',
-          fill: true,
-          tension: 0.4
+          label: 'Training Accuracy',
+          data: [],
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1
         }]
       },
       options: {
-        ...chartConfig,
-        plugins: {
-          ...chartConfig.plugins,
-          tooltip: {
-            callbacks: {
-              label: (context) => `Progress: ${context.raw}%`
-            }
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 1
           }
         }
       }
     });
-  
-    // Calories Chart
-    const caloriesCtx = document.getElementById('caloriesChart').getContext('2d');
-    new Chart(caloriesCtx, {
-      type: 'bar',
-      data: {
-        labels: data.weekly.map(d => d.name),
-        datasets: [{
-          data: data.weekly.map(d => d.calories),
-          backgroundColor: '#4f46e5'
-        }]
-      },
-      options: chartConfig
-    });
-  
-    // Steps Chart
-    const stepsCtx = document.getElementById('stepsChart').getContext('2d');
-    new Chart(stepsCtx, {
+
+    // Loss Chart
+    lossChart = new Chart(lossCtx, {
       type: 'line',
       data: {
-        labels: data.weekly.map(d => d.name),
+        labels: [],
         datasets: [{
-          data: data.weekly.map(d => d.steps),
-          borderColor: '#22c55e',
-          tension: 0.4
+          label: 'Training Loss',
+          data: [],
+          borderColor: 'rgb(255, 99, 132)',
+          tension: 0.1
         }]
       },
-      options: chartConfig
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
     });
   }
   
@@ -303,7 +301,11 @@ const data = {
   
   // Initialize everything when the DOM is loaded
   document.addEventListener('DOMContentLoaded', () => {
-    initializeCharts();
+    try {
+      initializeCharts();
+    } catch (error) {
+      console.error('Error initializing charts:', error);
+    }
     populateRecommendations();
     initializeAnimations();
     initializeWidgetContainer();
