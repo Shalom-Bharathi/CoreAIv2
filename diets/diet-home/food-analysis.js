@@ -1,5 +1,26 @@
 let stream = null;
 let selectedImage = null;
+let userDietType = null;
+
+// Initialize Firebase listener for diet type
+const initializeDietListener = () => {
+  const auth = firebase.auth();
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const db = firebase.firestore();
+      db.collection('users').doc(user.uid).get()
+        .then(doc => {
+          if (doc.exists && doc.data().diet_details) {
+            userDietType = doc.data().diet_details.diet_type;
+            console.log('Diet type loaded:', userDietType);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching diet type:', error);
+        });
+    }
+  });
+};
 
 // Camera handling
 window.toggleCamera = async () => {
@@ -18,10 +39,11 @@ window.toggleCamera = async () => {
     cameraPreview.srcObject = stream;
     cameraPreview.play();
     cameraPreview.classList.remove('hidden');
+    document.getElementById('camera-placeholder').classList.add('hidden');
     document.getElementById('image-preview-container').classList.add('hidden');
     document.getElementById('capture-button').classList.remove('hidden');
     document.getElementById('camera-toggle').innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform duration-200">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
       </svg>
       Close Camera
@@ -42,12 +64,15 @@ const stopCamera = () => {
   document.getElementById('camera-preview').classList.add('hidden');
   document.getElementById('capture-button').classList.add('hidden');
   document.getElementById('camera-toggle').innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform duration-200">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
       <circle cx="12" cy="13" r="3"/>
     </svg>
-    Open Camera
+    Take Photo
   `;
+  if (!selectedImage) {
+    document.getElementById('camera-placeholder').classList.remove('hidden');
+  }
 };
 
 window.captureImage = () => {
@@ -60,6 +85,7 @@ window.captureImage = () => {
   
   document.getElementById('image-preview').src = selectedImage;
   document.getElementById('image-preview-container').classList.remove('hidden');
+  document.getElementById('camera-placeholder').classList.add('hidden');
   stopCamera();
   updateAnalyzeButton();
 };
@@ -72,6 +98,7 @@ window.handleImageUpload = (event) => {
       selectedImage = reader.result;
       document.getElementById('image-preview').src = selectedImage;
       document.getElementById('image-preview-container').classList.remove('hidden');
+      document.getElementById('camera-placeholder').classList.add('hidden');
       stopCamera();
       updateAnalyzeButton();
     };
@@ -82,20 +109,22 @@ window.handleImageUpload = (event) => {
 window.clearImage = () => {
   selectedImage = null;
   document.getElementById('image-preview-container').classList.add('hidden');
+  document.getElementById('camera-placeholder').classList.remove('hidden');
   updateAnalyzeButton();
 };
 
 const updateAnalyzeButton = () => {
-  const dietInput = document.getElementById('diet-input');
-  const diet = dietInput.value.trim();
-  const canAnalyze = selectedImage && diet;
+  const canAnalyze = selectedImage && userDietType;
   const analyzeButton = document.getElementById('analyze-button');
   analyzeButton.disabled = !canAnalyze;
   analyzeButton.className = `analyze-button ${!canAnalyze ? 'disabled' : ''}`;
 };
 
 window.analyzeImage = async () => {
-  if (!selectedImage || !document.getElementById('diet-input').value.trim()) return;
+  if (!selectedImage || !userDietType) {
+    alert('Please ensure you have selected an image and your diet type is loaded.');
+    return;
+  }
 
   const analyzeButton = document.getElementById('analyze-button');
   const loadingSpinner = document.getElementById('loading-spinner');
@@ -134,7 +163,7 @@ window.analyzeImage = async () => {
                     "carbs": "carbs amount",
                     "fat": "fat amount"
                   },
-                  "dietCompatibility": "compatibility with ${document.getElementById('diet-input').value} diet and explanation"
+                  "dietCompatibility": "compatibility with ${userDietType} diet and explanation"
                 }`
               },
               {
@@ -212,5 +241,5 @@ window.analyzeImage = async () => {
   }
 };
 
-// Add event listener for diet input
-document.getElementById('diet-input')?.addEventListener('input', updateAnalyzeButton); 
+// Initialize the diet listener when the page loads
+document.addEventListener('DOMContentLoaded', initializeDietListener); 
