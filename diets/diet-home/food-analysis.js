@@ -135,51 +135,59 @@ window.analyzeImage = async () => {
   resultsSection.classList.add('hidden');
 
   try {
-    if (!openai) {
-      throw new Error('OpenAI client not initialized');
-    }
-
     // Get the user's diet type from the diet plan
     const user = firebase.auth().currentUser;
     const dietPlanDoc = await firebase.firestore().collection('dietPlans').doc(user.uid).get();
     const dietPlan = dietPlanDoc.data();
     const dietType = dietPlan?.diet_type || 'balanced';
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this food image and provide a JSON response with the following information:
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+        'OpenAI-Organization': 'org-AF3GvmYN6G7qLHbvDC6CyQAD'
+      },
+      body: JSON.stringify({
+        model: "gpt-4-vision-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
               {
-                "foodName": "name of the dish",
-                "ingredients": "list of main ingredients",
-                "calories": "estimated calories here",
-                "macronutrients": {
-                  "protein": "protein amount",
-                  "carbs": "carbs amount",
-                  "fat": "fat amount"
-                },
-                "dietCompatibility": "compatibility with ${dietType} diet and explanation"
-              }`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: selectedImage
+                type: "text",
+                text: `Analyze this food image and provide a JSON response with the following information:
+                {
+                  "foodName": "name of the dish",
+                  "ingredients": "list of main ingredients",
+                  "calories": "estimated calories here",
+                  "macronutrients": {
+                    "protein": "protein amount",
+                    "carbs": "carbs amount",
+                    "fat": "fat amount"
+                  },
+                  "dietCompatibility": "compatibility with ${dietType} diet and explanation"
+                }`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: selectedImage
+                }
               }
-            }
-          ]
-        }
-      ],
-      max_tokens: 500,
-      store: true
+            ]
+          }
+        ],
+        max_tokens: 500
+      })
     });
 
-    const content = response.choices[0]?.message?.content;
+    if (!response.ok) {
+      throw new Error('OpenAI API request failed');
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
     
     if (!content) {
       throw new Error('No content in response');
