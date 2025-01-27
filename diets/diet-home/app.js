@@ -1,33 +1,55 @@
 class DietDashboard {
   constructor() {
       this.db = firebase.firestore();
+      this.auth = firebase.auth();
   }
 
   async loadDietPlan() {
       try {
-          const snapshot = await this.db.collection('dietPlans')
+          const user = this.auth.currentUser;
+          if (!user) {
+              window.location.href = '../../index.html';
+              return;
+          }
+
+          // First try to get from 'dietPlans' collection
+          let snapshot = await this.db.collection('dietPlans')
+              .where('userId', '==', user.uid)
               .orderBy('timestamp', 'desc')
               .limit(1)
               .get();
 
-          if (!snapshot.empty) {
-              const rawData = snapshot.docs[0].data();
-              console.log('Raw diet plan data:', rawData);
+          // If no data in 'dietPlans', try 'users' collection
+          if (snapshot.empty) {
+              const userDoc = await this.db.collection('users')
+                  .doc(user.uid)
+                  .get();
               
-              // Check if data is nested under diet_details or directly available
-              const dietPlan = rawData.diet_details || rawData;
-              console.log('Processed diet plan:', dietPlan);
-              
-              if (dietPlan) {
+              if (userDoc.exists && userDoc.data().dietPlan) {
+                  const rawData = userDoc.data().dietPlan;
+                  console.log('Diet plan found in users collection:', rawData);
+                  const dietPlan = rawData.diet_details || rawData;
                   this.renderDietPlan(dietPlan);
-              } else {
-                  this.showError('Invalid diet plan format.');
+                  return;
               }
-          } else {
+              
               this.showError('No diet plan found. Please generate a diet plan first.');
               setTimeout(() => {
                   window.location.href = '../generate-diets/index.html';
               }, 3000);
+              return;
+          }
+
+          const rawData = snapshot.docs[0].data();
+          console.log('Raw diet plan data:', rawData);
+          
+          const dietPlan = rawData.diet_details || rawData;
+          console.log('Processed diet plan:', dietPlan);
+          
+          if (dietPlan) {
+              this.renderDietPlan(dietPlan);
+          } else {
+              this.showError('Invalid diet plan format.');
           }
       } catch (error) {
           console.error('Error getting diet plan:', error);
@@ -197,4 +219,145 @@ class DietDashboard {
 document.addEventListener('DOMContentLoaded', () => {
     const dashboard = new DietDashboard();
     dashboard.loadDietPlan();
+});
+
+// Initialize Firebase Auth
+const auth = firebase.auth();
+
+// Handle logout
+document.getElementById('logoutButton').addEventListener('click', () => {
+  auth.signOut().then(() => {
+    window.location.href = '../../index.html';
+  });
+});
+
+// Get latest diet plan for current user
+async function getLatestDietPlan() {
+  const user = auth.currentUser;
+  if (!user) return null;
+
+  try {
+    const snapshot = await db.collection('dietPlans')
+      .where('userId', '==', user.uid)
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    return snapshot.docs[0].data();
+  } catch (error) {
+    console.error('Error fetching diet plan:', error);
+    return null;
+  }
+}
+
+// Update UI with diet plan data
+async function updateUI() {
+  const dietPlan = await getLatestDietPlan();
+  if (!dietPlan) {
+    window.location.href = '../generate-diets/index.html';
+    return;
+  }
+
+  // Update diet type
+  document.querySelector('.diet-type').textContent = dietPlan.diet_type;
+  
+  // Update calories
+  document.querySelector('.calories-value').textContent = `${dietPlan.calories_per_day} kcal`;
+  
+  // Update hydration
+  document.querySelector('.hydration-value').textContent = dietPlan.hydration_recommendation.daily_intake;
+
+  // Update macronutrient rings
+  const macros = dietPlan.macronutrient_split;
+  updateMacroRing('carbohydrates', macros.carbohydrates.percentage);
+  updateMacroRing('proteins', macros.proteins.percentage);
+  updateMacroRing('fats', macros.fats.percentage);
+
+  // Update macro sources
+  const macroSources = document.querySelector('.macro-sources');
+  macroSources.innerHTML = `
+    <div class="macro-source">
+      <h4>Carbs</h4>
+      <ul>${macros.carbohydrates.source_examples.map(source => `<li>${source}</li>`).join('')}</ul>
+    </div>
+    <div class="macro-source">
+      <h4>Proteins</h4>
+      <ul>${macros.proteins.source_examples.map(source => `<li>${source}</li>`).join('')}</ul>
+    </div>
+    <div class="macro-source">
+      <h4>Fats</h4>
+      <ul>${macros.fats.source_examples.map(source => `<li>${source}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  // Update guidelines
+  const dosList = document.querySelector('.dos-list');
+  const dontsList = document.querySelector('.donts-list');
+  const specialTipsList = document.querySelector('.special-tips-list');
+
+  dosList.innerHTML = dietPlan.additional_guidelines.dos.map(item => `<li>${item}</li>`).join('');
+  dontsList.innerHTML = dietPlan.additional_guidelines.donts.map(item => `<li>${item}</li>`).join('');
+  specialTipsList.innerHTML = dietPlan.additional_guidelines.special_tips.map(tip => `<li class="special-tip">${tip}</li>`).join('');
+
+  // Update vitamins and minerals
+  const vitaminsList = document.querySelector('.vitamins-list');
+  const mineralsList = document.querySelector('.minerals-list');
+
+  vitaminsList.innerHTML = Object.entries(dietPlan.micronutrients.vitamins)
+    .map(([vitamin, source]) => `
+      <div class="nutrient-item">
+        <span class="nutrient-name">Vitamin ${vitamin}</span>
+        <span class="nutrient-value">${source}</span>
+      </div>
+    `).join('');
+
+  mineralsList.innerHTML = Object.entries(dietPlan.micronutrients.minerals)
+    .map(([mineral, source]) => `
+      <div class="nutrient-item">
+        <span class="nutrient-name">${mineral}</span>
+        <span class="nutrient-value">${source}</span>
+      </div>
+    `).join('');
+
+  // Update outcomes
+  const outcomesGrid = document.querySelector('.outcomes-grid');
+  outcomesGrid.innerHTML = Object.entries(dietPlan.expected_outcomes)
+    .map(([outcome, isExpected]) => `
+      <div class="outcome-item ${isExpected ? 'active' : ''}">
+        <svg class="outcome-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          ${isExpected ? '<path d="M20 6L9 17l-5-5"/>' : '<path d="M18 6L6 18M6 6l12 12"/>'}
+        </svg>
+        <span>${outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+      </div>
+    `).join('');
+
+  // Update physical activity
+  const activityRecommendation = document.querySelector('.activity-recommendation');
+  const suggestedActivities = document.querySelector('.suggested-activities');
+
+  activityRecommendation.innerHTML = `<p>${dietPlan.physical_activity.recommendation}</p>`;
+  suggestedActivities.innerHTML = dietPlan.physical_activity.suggested_activities
+    .map(activity => `<div class="activity-tag">${activity}</div>`).join('');
+}
+
+// Helper function to update macro rings
+function updateMacroRing(macro, percentage) {
+  const ring = document.querySelector(`[data-macro="${macro}"]`);
+  if (ring) {
+    ring.style.setProperty('--percentage', `${percentage}%`);
+    ring.querySelector('.percentage').textContent = `${percentage}%`;
+  }
+}
+
+// Initialize the page
+auth.onAuthStateChanged(user => {
+  if (user) {
+    updateUI();
+  } else {
+    window.location.href = '../../index.html';
+  }
 });
