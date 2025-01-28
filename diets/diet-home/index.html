@@ -596,13 +596,24 @@
   },
   voice: {
     provider: "11labs",
-    voiceId: "paula",
+    voiceId: "XiPS9cXxAVbaIWtGDHDh",
   },
-  firstMessage: "Hey I'm Core AI! and welcome to your diet plan. You can ask me anything about your diet plan and I'll do my best to help you.",
+  firstMessage: "Hey I'm Core AI, and welcome to your diet plan! You can ask me anything about your diet plan and I'll do my best to help you.",
     };
 
     const apiKey = "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0"; // Substitute with your Public key from Vapi Dashboard.
-    const buttonConfig = {}; // Modify this as required
+    const buttonConfig = {
+    position: "top-right", // "bottom" | "top" | "left" | "right" | "top-right" | "top-left" | "bottom-left" | "bottom-right"
+    offset: "40px", // decide how far the button should be from the edge
+    width: "100px", // min-width of the button
+    height: "100px", // height of the button
+    idle: { 
+      icon: "../../assets/bot.svg", // icon of the button
+    },
+    active: {
+      icon: "../../assets/bot-off.svg", // icon of the button
+    },
+  }; // Modify this as required
   
     (function (d, t) {
       var g = document.createElement(t),
