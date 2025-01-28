@@ -1,0 +1,182 @@
+/* Diet Information Cards */
+.diet-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.diet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.diet-card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.diet-card-header svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.diet-card-content {
+  padding: 1.5rem;
+}
+
+/* Dietary Guidelines */
+#dietaryGuidelines .guideline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Special Tips */
+#specialTips .tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Vitamins and Minerals */
+.nutrient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.nutrient-item {
+  background-color: rgba(99, 102, 241, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.nutrient-item h4 {
+  color: #4F46E5;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Expected Outcomes */
+#expectedOutcomes .outcome-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(34, 197, 94, 0.1);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Physical Activity Plan */
+#physicalActivityPlan .activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Food Analysis Section */
+.food-analysis-container {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.upload-area {
+  border: 2px dashed #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+  border-color: #6366F1;
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+.results-container {
+  background-color: #F9FAFB;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.macro-item {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .diet-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .macro-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .nutrient-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid rgba(99, 102, 241, 0.1);
+  border-radius: 50%;
+  border-top: 3px solid #6366F1;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

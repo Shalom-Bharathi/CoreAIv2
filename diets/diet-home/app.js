@@ -238,3 +238,150 @@ class DietDashboard {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM Content Loaded - Dashboard ready for initialization');
 });
+
+function renderDietaryGuidelines(guidelines) {
+  const container = document.getElementById('dietaryGuidelines');
+  container.innerHTML = '';
+  guidelines.forEach(guideline => {
+    const item = document.createElement('div');
+    item.className = 'guideline-item fade-in';
+    item.innerHTML = `
+      <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>${guideline}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderSpecialTips(tips) {
+  const container = document.getElementById('specialTips');
+  container.innerHTML = '';
+  tips.forEach(tip => {
+    const item = document.createElement('div');
+    item.className = 'tip-item fade-in';
+    item.innerHTML = `
+      <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>${tip}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderDailyVitamins(vitamins) {
+  const container = document.getElementById('dailyVitamins');
+  container.className = 'nutrient-grid';
+  container.innerHTML = '';
+  Object.entries(vitamins).forEach(([vitamin, amount]) => {
+    const item = document.createElement('div');
+    item.className = 'nutrient-item fade-in';
+    item.innerHTML = `
+      <h4>${vitamin}</h4>
+      <p>${amount}</p>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderDailyMinerals(minerals) {
+  const container = document.getElementById('dailyMinerals');
+  container.className = 'nutrient-grid';
+  container.innerHTML = '';
+  Object.entries(minerals).forEach(([mineral, amount]) => {
+    const item = document.createElement('div');
+    item.className = 'nutrient-item fade-in';
+    item.innerHTML = `
+      <h4>${mineral}</h4>
+      <p>${amount}</p>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderExpectedOutcomes(outcomes) {
+  const container = document.getElementById('expectedOutcomes');
+  container.innerHTML = '';
+  outcomes.forEach(outcome => {
+    const item = document.createElement('div');
+    item.className = 'outcome-item fade-in';
+    item.innerHTML = `
+      <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>${outcome}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderPhysicalActivityPlan(activities) {
+  const container = document.getElementById('physicalActivityPlan');
+  container.innerHTML = '';
+  activities.forEach(activity => {
+    const item = document.createElement('div');
+    item.className = 'activity-item fade-in';
+    item.innerHTML = `
+      <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+      <span>${activity}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// Update the food analysis results display
+function updateResults(analysis) {
+  const resultsSection = document.getElementById('results-section');
+  resultsSection.className = 'results-container fade-in';
+  
+  // Update all result fields with new styling
+  const updateField = (id, value, defaultValue = 'Unable to determine') => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value || defaultValue;
+      element.className = 'text-gray-700 font-medium';
+    }
+  };
+
+  updateField('food-name-result', analysis.foodName);
+  updateField('ingredients-result', analysis.ingredients);
+  updateField('calories-result', analysis.calories);
+  
+  // Update macronutrients with grid layout
+  const macroContainer = document.createElement('div');
+  macroContainer.className = 'macro-grid';
+  
+  const macros = [
+    { id: 'protein-result', label: 'Protein', value: analysis.macronutrients?.protein },
+    { id: 'carbs-result', label: 'Carbs', value: analysis.macronutrients?.carbs },
+    { id: 'fat-result', label: 'Fat', value: analysis.macronutrients?.fat }
+  ];
+  
+  macros.forEach(macro => {
+    const item = document.createElement('div');
+    item.className = 'macro-item';
+    item.innerHTML = `
+      <p class="text-sm text-gray-500">${macro.label}</p>
+      <p id="${macro.id}" class="font-medium text-gray-700">${macro.value || 'N/A'}</p>
+    `;
+    macroContainer.appendChild(item);
+  });
+  
+  const macroSection = document.getElementById('macronutrients-section');
+  if (macroSection) {
+    macroSection.innerHTML = '';
+    macroSection.appendChild(macroContainer);
+  }
+  
+  updateField('diet-result', analysis.dietCompatibility);
+  
+  resultsSection.style.display = 'block';
+  resultsSection.style.opacity = '0';
+  requestAnimationFrame(() => {
+    resultsSection.style.opacity = '1';
+  });
+}
