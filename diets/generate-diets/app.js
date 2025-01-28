@@ -626,29 +626,41 @@ function showError(message) {
 
 // Function to process audio response using Whisper API
 async function processAudioResponse(audioBlob) {
-  // Convert audio blob to base64
-  const base64Audio = await new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-    reader.readAsDataURL(audioBlob);
-  });
+  if (!API_KEY) {
+    console.error('API key not found');
+    updateStatus('Service not ready. Please try again in a moment.');
+    return '';
+  }
 
   try {
+    // Create form data for the file upload
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.webm');
+    formData.append('model', 'whisper-1');
+
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${API_KEY.trim()}`
       },
-      body: JSON.stringify({
-        file: base64Audio,
-        model: 'whisper-1'
-      })
+      body: formData
     });
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Audio transcription error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`Transcription failed: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
-    return data.text;
+    return data.text || '';
   } catch (error) {
     console.error('Error processing audio:', error);
+    updateStatus('Sorry, I had trouble understanding that. Please try again.');
     return '';
   }
 }
