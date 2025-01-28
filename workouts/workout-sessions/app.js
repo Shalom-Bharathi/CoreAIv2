@@ -1,8 +1,10 @@
 // Workout Session Management
 import { SheetsIntegration } from './sheets-integration.js';
 
-// Initialize sheets integration
-const sheetsIntegration = new SheetsIntegration('../../your-credentials.json');
+// Initialize sheets integration with API key
+const sheetsIntegration = new SheetsIntegration({
+  api_key: 'YOUR_GOOGLE_API_KEY' // Replace with your actual API key
+});
 
 class WorkoutSession {
   constructor() {
