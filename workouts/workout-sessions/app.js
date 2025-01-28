@@ -335,15 +335,34 @@ class WorkoutSession {
     try {
       // Calculate workout duration
       const duration = Math.floor((Date.now() - this.startTime) / 1000);
+      const user = firebase.auth().currentUser;
       
-      // Save workout completion to Firebase
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const db = firebase.firestore();
+      
+      // Save workout completion to workouts collection
       if (this.workout.id) {
-        const db = firebase.firestore();
         await db.collection('workouts').doc(this.workout.id).update({
           completed: true,
           completedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
+
+      // Save workout session details
+      await db.collection('workout-sessions').add({
+        userId: user.uid,
+        workoutName: this.workout.name,
+        workoutId: this.workout.id || null,
+        completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        duration: duration,
+        exercisesCompleted: this.workout.exercises.length,
+        type: this.workout.type || 'custom',
+        difficulty: this.workout.difficulty || 'medium',
+        caloriesBurned: parseInt(document.getElementById('caloriesBurned').textContent) || 0
+      });
 
       // Update completion popup stats
       document.getElementById('workoutDuration').textContent = this.formatTime(duration);
@@ -365,6 +384,7 @@ class WorkoutSession {
       }
     } catch (error) {
       console.error('Error completing workout:', error);
+      alert('There was an error saving your workout progress. Your progress may not be saved.');
       window.location.href = '../';
     }
   }
