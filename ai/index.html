@@ -7,10 +7,24 @@
 </head>
 <body>
     <script>  
+    
         var vapiInstance = null;
-        const assistant = "<assistant_id>"; // Substitute with your assistant ID
-        const apiKey = "<your_public_api_key>"; // Substitute with your Public key from Vapi Dashboard.
-        const buttonConfig = {}; // Modify this as required
+        const assistant = "2ebcf5af-0544-49da-86da-73e48142818b"; // Substitute with your assistant ID
+        const apiKey = "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0"; // Substitute with your Public key from Vapi Dashboard.
+        const buttonConfig = {
+
+            position: "top", // "bottom" | "top" | "left" | "right" | "top-right" | "top-left" | "bottom-left" | "bottom-right"
+            offset: "40px", // decide how far the button should be from the edge
+            width: "100px", // min-width of the button
+            height: "100px",
+
+            idle: {
+                icon: `../assets/bot.svg`,
+            },
+            active: {
+                icon: `../assets/bot-off.svg`,
+            }
+        }; // Modify this as required
       
         (function (d, t) {
           var g = document.createElement(t),

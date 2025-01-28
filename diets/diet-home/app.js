@@ -332,3 +332,50 @@ function renderPhysicalActivityPlan(activities) {
     container.appendChild(item);
   });
 }
+
+// Initialize OpenAI
+const openai = new OpenAI();
+
+// DOM Elements
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('image-preview');
+const previewImg = document.getElementById('previewImg');
+const analyzeButton = document.getElementById('analyze-button');
+const loadingSpinner = document.getElementById('loading-spinner');
+const analyzeText = document.getElementById('analyze-text');
+const resultsSection = document.getElementById('results-section');
+
+let selectedImage = null;
+
+// Handle image upload
+window.handleImageUpload = (event) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedImage = e.target.result;
+      previewImg.src = selectedImage;
+      imagePreview.classList.remove('hidden');
+      analyzeButton.disabled = false;
+    };
+    reader.onerror = () => {
+      alert('Error reading file');
+      console.error('FileReader error:', reader.error);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// Clear the selected image
+window.clearImage = () => {
+  selectedImage = null;
+  imagePreview.classList.add('hidden');
+  imageInput.value = '';
+  analyzeButton.disabled = true;
+  resultsSection.classList.add('hidden');
+};
