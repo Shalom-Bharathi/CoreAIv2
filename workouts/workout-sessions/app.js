@@ -1,4 +1,9 @@
 // Workout Session Management
+import { SheetsIntegration } from './sheets-integration.js';
+
+// Initialize sheets integration
+const sheetsIntegration = new SheetsIntegration('../../your-credentials.json');
+
 class WorkoutSession {
   constructor() {
     this.workout = null;
@@ -351,8 +356,8 @@ class WorkoutSession {
         });
       }
 
-      // Save workout session details
-      await db.collection('workout-sessions').add({
+      // Save workout session details to Firebase
+      const workoutData = {
         userId: user.uid,
         workoutName: this.workout.name,
         workoutId: this.workout.id || null,
@@ -362,7 +367,18 @@ class WorkoutSession {
         type: this.workout.type || 'custom',
         difficulty: this.workout.difficulty || 'medium',
         caloriesBurned: parseInt(document.getElementById('caloriesBurned').textContent) || 0
-      });
+      };
+
+      await db.collection('workout-sessions').add(workoutData);
+
+      // Save to Google Sheets
+      try {
+        await sheetsIntegration.initialize();
+        await sheetsIntegration.saveWorkoutCompletion(workoutData);
+      } catch (sheetsError) {
+        console.error('Error saving to Google Sheets:', sheetsError);
+        // Don't throw the error as we still want to show completion UI
+      }
 
       // Update completion popup stats
       document.getElementById('workoutDuration').textContent = this.formatTime(duration);
