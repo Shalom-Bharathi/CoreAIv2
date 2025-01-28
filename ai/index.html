@@ -68,11 +68,12 @@
             <div class="assistant-container">
                 <div class="assistant-card fade-in">
                     <div class="assistant-header">
-                        <div class="assistant-avatar">
-                            <img src="../assets/bot.svg" alt="CoreAI Assistant" class="pulse-animation">
+                        <div class="assistant-status">
+                            <div class="status-indicator"></div>
+                            <span>AI Assistant Active</span>
                         </div>
-                        <h1>CoreAI Assistant</h1>
-                        <p class="assistant-subtitle">Your personal health and fitness companion</p>
+                        <h1>Meet Your AI Assistant</h1>
+                        <p class="assistant-subtitle">Your intelligent health and fitness companion, powered by advanced AI</p>
                     </div>
 
                     <div class="assistant-features">
@@ -93,15 +94,9 @@
                         </div>
                     </div>
 
-                    <div class="assistant-controls">
-                        <div class="control-status">
-                            <div class="status-indicator"></div>
-                            <span>Ready to assist</span>
-                        </div>
-                        <button id="startButton" class="control-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1.1 0 2 .9 2 2v7c0 1.1-.9 2-2 2s-2-.9-2-2V4c0-1.1.9-2 2-2z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                            Start Conversation
-                        </button>
+                    <div class="assistant-prompt">
+                        <p>Click the AI button to start your conversation</p>
+                        <div class="prompt-arrow"></div>
                     </div>
                 </div>
             </div>
@@ -116,13 +111,21 @@
         const buttonConfig = {
             position: "bottom-right",
             offset: "40px",
-            width: "60px",
-            height: "60px",
+            width: "80px",
+            height: "80px",
             idle: {
                 icon: `../assets/bot.svg`,
+                backgroundColor: "#6366f1",
+                boxShadow: "0 8px 16px rgba(99, 102, 241, 0.25)",
             },
             active: {
                 icon: `../assets/bot-off.svg`,
+                backgroundColor: "#4f46e5",
+                boxShadow: "0 8px 16px rgba(79, 70, 229, 0.25)",
+            },
+            hover: {
+                transform: "scale(1.1)",
+                boxShadow: "0 12px 24px rgba(99, 102, 241, 0.3)",
             }
         };
       
