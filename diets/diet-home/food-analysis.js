@@ -167,7 +167,7 @@ window.analyzeImage = async () => {
         'Authorization': `Bearer ${API_KEY.trim()}`
       },
       body: JSON.stringify({
-        model: "gpt-4-vision-preview",
+        model: "gpt-4o",
         messages: [
           {
             role: "user",
