@@ -109,7 +109,16 @@ const updateAnalyzeButton = () => {
 };
 
 window.analyzeImage = async () => {
-  if (!selectedImage || !API_KEY) return;
+  if (!selectedImage) {
+    alert('Please select or capture an image first.');
+    return;
+  }
+  
+  if (!API_KEY) {
+    console.error('API key not found');
+    alert('Unable to analyze image. API key not configured.');
+    return;
+  }
 
   const analyzeButton = document.getElementById('analyze-button');
   const loadingSpinner = document.getElementById('loading-spinner');
@@ -126,16 +135,30 @@ window.analyzeImage = async () => {
   try {
     // Get the user's diet type from the diet plan
     const user = firebase.auth().currentUser;
-    const dietPlanDoc = await firebase.firestore().collection('dietPlans').doc(user.uid).get();
-    const dietPlan = dietPlanDoc.data();
-    const dietType = dietPlan?.diet_type || 'balanced';
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
+    let dietType = 'balanced';
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+      const userData = userDoc.data();
+      if (userData?.dietPlan?.diet_type) {
+        dietType = userData.dietPlan.diet_type;
+      }
+    } catch (error) {
+      console.warn('Error fetching diet type:', error);
+      // Continue with default diet type
+    }
+
+    // Clean up the base64 image string
+    const base64Image = selectedImage.split(',')[1];
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-        'OpenAI-Organization': 'org-AF3GvmYN6G7qLHbvDC6CyQAD'
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-4-vision-preview",
@@ -172,7 +195,9 @@ window.analyzeImage = async () => {
     });
 
     if (!response.ok) {
-      throw new Error('OpenAI API request failed');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Response:', response.status, errorData);
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -183,23 +208,37 @@ window.analyzeImage = async () => {
     }
 
     // Try to extract JSON from the response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('No JSON found in response');
+    let analysis;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+      analysis = JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error parsing response:', error);
+      throw new Error('Invalid response format');
     }
-
-    const analysis = JSON.parse(jsonMatch[0]);
     
     // Update results with fade-in animation
     resultsSection.style.opacity = '0';
     resultsSection.classList.remove('hidden');
-    document.getElementById('food-name-result').textContent = analysis.foodName || 'Unable to determine';
-    document.getElementById('ingredients-result').textContent = analysis.ingredients || 'Unable to determine';
-    document.getElementById('calories-result').textContent = analysis.calories || 'Unable to determine';
-    document.getElementById('protein-result').textContent = analysis.macronutrients?.protein || 'N/A';
-    document.getElementById('carbs-result').textContent = analysis.macronutrients?.carbs || 'N/A';
-    document.getElementById('fat-result').textContent = analysis.macronutrients?.fat || 'N/A';
-    document.getElementById('diet-result').textContent = analysis.dietCompatibility || 'Unable to analyze';
+    
+    // Update all result fields
+    const updateField = (id, value, defaultValue = 'Unable to determine') => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value || defaultValue;
+      }
+    };
+
+    updateField('food-name-result', analysis.foodName);
+    updateField('ingredients-result', analysis.ingredients);
+    updateField('calories-result', analysis.calories);
+    updateField('protein-result', analysis.macronutrients?.protein, 'N/A');
+    updateField('carbs-result', analysis.macronutrients?.carbs, 'N/A');
+    updateField('fat-result', analysis.macronutrients?.fat, 'N/A');
+    updateField('diet-result', analysis.dietCompatibility);
     
     // Trigger reflow for animation
     resultsSection.offsetHeight;
@@ -208,16 +247,21 @@ window.analyzeImage = async () => {
   } catch (error) {
     console.error('Error analyzing image:', error);
     
+    // Show error message to user
+    alert(`Error analyzing image: ${error.message}`);
+    
     // Show fallback results
     resultsSection.style.opacity = '0';
     resultsSection.classList.remove('hidden');
-    document.getElementById('food-name-result').textContent = 'Unable to determine';
-    document.getElementById('ingredients-result').textContent = 'Unable to determine';
-    document.getElementById('calories-result').textContent = 'Unable to determine';
-    document.getElementById('protein-result').textContent = 'N/A';
-    document.getElementById('carbs-result').textContent = 'N/A';
-    document.getElementById('fat-result').textContent = 'N/A';
-    document.getElementById('diet-result').textContent = 'Unable to analyze';
+    
+    const fields = ['food-name-result', 'ingredients-result', 'calories-result', 
+                   'protein-result', 'carbs-result', 'fat-result', 'diet-result'];
+    fields.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = id.includes('result') ? 'N/A' : 'Unable to determine';
+      }
+    });
     
     // Trigger reflow for animation
     resultsSection.offsetHeight;
