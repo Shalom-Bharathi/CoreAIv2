@@ -53,7 +53,7 @@ class WorkoutSession {
 
         // Initialize Vapi
         const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@1.0.0/dist/assets/index.js";
         script.onload = function() {
           window.vapiInstance = window.vapiSDK.run({
             apiKey: "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0",
