@@ -10,6 +10,7 @@ thingsRefx = db.collection('API');
 unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
   querySnapshot.docs.forEach(doc => {
     API_KEY = doc.data().API;
+    console.log('API Key loaded:', API_KEY ? 'Key present' : 'Key missing');
   });
 });
 
@@ -115,10 +116,17 @@ window.analyzeImage = async () => {
   }
   
   if (!API_KEY) {
-    console.error('API key not found');
-    alert('Unable to analyze image. API key not configured.');
+    console.error('API key not found or invalid');
+    alert('Unable to analyze image. API key not configured properly. Please check the console for more details.');
     return;
   }
+
+  // Log API key format (safely)
+  console.log('API Key format check:', {
+    length: API_KEY?.length,
+    prefix: API_KEY?.substring(0, 3),
+    isString: typeof API_KEY === 'string'
+  });
 
   const analyzeButton = document.getElementById('analyze-button');
   const loadingSpinner = document.getElementById('loading-spinner');
@@ -151,14 +159,12 @@ window.analyzeImage = async () => {
       // Continue with default diet type
     }
 
-    // Clean up the base64 image string
-    const base64Image = selectedImage.split(',')[1];
-    
+    console.log('Making API request...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
+        'Authorization': `Bearer ${API_KEY.trim()}`
       },
       body: JSON.stringify({
         model: "gpt-4-vision-preview",
@@ -196,8 +202,12 @@ window.analyzeImage = async () => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('API Response:', response.status, errorData);
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      console.error('API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
