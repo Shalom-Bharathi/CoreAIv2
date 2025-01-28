@@ -43,6 +43,104 @@
   
   <!-- Initialize auth check after app is loaded -->
   <script>
+    // Global variables
+    window.dietPlan = "";
+    window.vapiInstance = null;
+
+    // Function to load diet plan
+    async function loadDietPlan() {
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+          console.error('No user logged in');
+          return;
+        }
+
+        // First try to get from users collection
+        const userDoc = await firebase.firestore().collection('users')
+          .doc(user.uid)
+          .get();
+
+        let dietPlanData = null;
+
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData.dietPlan) {
+            dietPlanData = userData.dietPlan;
+            if (dietPlanData.diet_details) {
+              dietPlanData = dietPlanData.diet_details;
+            }
+          }
+        }
+
+        // If not found in users collection, try dietPlan collection
+        if (!dietPlanData) {
+          const snapshot = await firebase.firestore().collection('dietPlan')
+            .where('userId', '==', user.uid)
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .get();
+
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            dietPlanData = data.diet_details || data;
+          }
+        }
+
+        if (dietPlanData) {
+          window.dietPlan = JSON.stringify(dietPlanData, null, 2);
+          console.log('Diet plan loaded:', window.dietPlan);
+        } else {
+          console.log('No diet plan found');
+          window.dietPlan = "No diet plan found. Please generate a diet plan first.";
+        }
+
+        initializeVapi();
+      } catch (error) {
+        console.error('Error loading diet plan:', error);
+        window.dietPlan = "Error loading diet plan. Please try again later.";
+        initializeVapi();
+      }
+    }
+
+    // Function to initialize Vapi
+    function initializeVapi() {
+      const script = document.createElement('script');
+      script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+      script.defer = true;
+      script.async = true;
+      
+      script.onload = function () {
+        window.vapiInstance = window.vapiSDK.run({
+          apiKey: "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0",
+          assistant: {
+            model: {
+              provider: "openai",
+              model: "gpt-4o",
+              systemPrompt: `You are CoreAI, an advanced AI assistant focused on personalized dietary
+                guidance. On this page, your role is to help users create and optimize their
+                diet plans based on their preferences, habits, and goals. Ask relevant
+                questions to understand their lifestyle and provide clear, practical 
+                advice on achieving balance and sustainability in their diet. Offer 
+                insights into food composition and suitability while maintaining an
+                engaging and supportive tone. Adapt your recommendations based on user 
+                feedback to ensure their dietary journey is effective and enjoyable.
+                This is the users diet plan:
+                ${window.dietPlan}`,
+            },
+            voice: {
+              provider: "11labs",
+              voiceId: "paula",
+            },
+            firstMessage: "Hey I'm Core AI! and welcome to your diet plan. You can ask me anything about your diet plan and I'll do my best to help you.",
+          },
+          config: {}
+        });
+      };
+
+      document.getElementsByTagName('script')[0].parentNode.appendChild(script);
+    }
+
     // Initialize auth and check state
     firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
@@ -50,8 +148,7 @@
         window.location.href = '../../index.html';
       } else {
         console.log('User authenticated:', user.email);
-        // Initialize dashboard with the authenticated user
-        window.dietDashboard = new DietDashboard(user);
+        loadDietPlan();
       }
     });
   </script>
@@ -475,7 +572,58 @@
       </div>
     </div>
   </div>
+  <script>
+    let dietPlan = "";
 
+    var vapiInstance = null;
+    const assistant = {
+  model: {
+    provider: "openai",
+    model: "gpt-4o",
+    systemPrompt:
+      ```
+      You are CoreAI, an advanced AI assistant focused on personalized dietary
+       guidance. On this page, your role is to help users create and optimize their
+        diet plans based on their preferences, habits, and goals. Ask relevant
+         questions to understand their lifestyle and provide clear, practical 
+         advice on achieving balance and sustainability in their diet. Offer 
+         insights into food composition and suitability while maintaining an
+          engaging and supportive tone. Adapt your recommendations based on user 
+          feedback to ensure their dietary journey is effective and enjoyable.
+          This is the users diet plan:
+          ${dietPlan}
+      ```,
+  },
+  voice: {
+    provider: "11labs",
+    voiceId: "paula",
+  },
+  firstMessage: "Hey I'm Core AI! and welcome to your diet plan. You can ask me anything about your diet plan and I'll do my best to help you.",
+    };
+
+    const apiKey = "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0"; // Substitute with your Public key from Vapi Dashboard.
+    const buttonConfig = {}; // Modify this as required
+  
+    (function (d, t) {
+      var g = document.createElement(t),
+        s = d.getElementsByTagName(t)[0];
+      g.src =
+        "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+      g.defer = true;
+      g.async = true;
+      s.parentNode.insertBefore(g, s);
+  
+      g.onload = function () {
+        vapiInstance = window.vapiSDK.run({
+          apiKey: apiKey, // mandatory
+          assistant: assistant, // mandatory
+          config: buttonConfig, // optional
+        });
+      };
+    })(document, "script");
+  
+  </script>
+  
   <style>
   :root {
     --glass-bg: rgba(255, 255, 255, 0.1);

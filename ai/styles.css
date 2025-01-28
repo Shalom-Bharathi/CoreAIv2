@@ -288,4 +288,111 @@ body {
   .assistant-subtitle {
     font-size: 1.1rem;
   }
+}
+
+/* Add to existing styles */
+
+.category-sections {
+    margin: 4rem 0;
+    text-align: center;
+}
+
+.category-sections h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+}
+
+.sections-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    padding: 0 2rem;
+}
+
+.section-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: #6366f1;
+}
+
+.section-icon {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+}
+
+.section-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.section-card p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.section-arrow {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+}
+
+.section-card:hover .section-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.section-arrow svg {
+    width: 20px;
+    height: 20px;
+    stroke: #6366f1;
+}
+
+@media (max-width: 768px) {
+    .sections-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+
+    .section-card {
+        padding: 1.5rem;
+    }
+
+    .section-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
 } 
