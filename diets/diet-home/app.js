@@ -385,3 +385,167 @@ function updateResults(analysis) {
     resultsSection.style.opacity = '1';
   });
 }
+
+// Initialize OpenAI
+const openai = new OpenAI();
+
+// DOM Elements
+const imageInput = document.getElementById('imageInput');
+const uploadArea = document.getElementById('uploadArea');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const clearButton = document.getElementById('clearImage');
+const analyzeButton = document.getElementById('analyzeButton');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const analyzeText = document.getElementById('analyzeText');
+const resultsSection = document.getElementById('resultsSection');
+
+let selectedImage = null;
+
+// Handle file selection
+imageInput.addEventListener('change', handleImageSelect);
+uploadArea.addEventListener('dragover', handleDragOver);
+uploadArea.addEventListener('drop', handleDrop);
+clearButton.addEventListener('click', clearImage);
+analyzeButton.addEventListener('click', analyzeImage);
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.add('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.remove('drag-over');
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleFile(file);
+    }
+}
+
+function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        handleFile(file);
+    }
+}
+
+function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        selectedImage = e.target.result;
+        previewImg.src = selectedImage;
+        imagePreview.classList.remove('hidden');
+        uploadArea.classList.add('hidden');
+        analyzeButton.disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    selectedImage = null;
+    imagePreview.classList.add('hidden');
+    uploadArea.classList.remove('hidden');
+    analyzeButton.disabled = true;
+    resultsSection.classList.add('hidden');
+    imageInput.value = '';
+}
+
+async function analyzeImage() {
+    if (!selectedImage) {
+        alert('Please select an image first');
+        return;
+    }
+
+    // Show loading state
+    analyzeButton.disabled = true;
+    loadingSpinner.classList.remove('hidden');
+    analyzeText.classList.add('hidden');
+    resultsSection.classList.add('hidden');
+
+    try {
+        // Get user's diet type from Firebase
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+
+        let dietType = 'balanced';
+        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+        if (userData?.dietPlan?.diet_type) {
+            dietType = userData.dietPlan.diet_type;
+        }
+
+        // Analyze image with OpenAI
+        const response = await openai.chat.completions.create({
+            model: "gpt-4-vision-preview",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: `Analyze this food image and provide a JSON response with the following information:
+                            {
+                                "foodName": "name of the dish",
+                                "ingredients": "list of main ingredients",
+                                "calories": "estimated calories",
+                                "macronutrients": {
+                                    "protein": "protein amount",
+                                    "carbs": "carbs amount",
+                                    "fat": "fat amount"
+                                },
+                                "dietCompatibility": "compatibility with ${dietType} diet and explanation"
+                            }`
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: selectedImage
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 500
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+            throw new Error('No content in response');
+        }
+
+        // Parse the response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error('No JSON found in response');
+        }
+        const analysis = JSON.parse(jsonMatch[0]);
+
+        // Update the results
+        document.getElementById('foodNameResult').textContent = analysis.foodName;
+        document.getElementById('ingredientsResult').textContent = analysis.ingredients;
+        document.getElementById('caloriesResult').textContent = analysis.calories;
+        document.getElementById('proteinResult').textContent = analysis.macronutrients.protein;
+        document.getElementById('carbsResult').textContent = analysis.macronutrients.carbs;
+        document.getElementById('fatResult').textContent = analysis.macronutrients.fat;
+        document.getElementById('dietResult').textContent = analysis.dietCompatibility;
+
+        // Show results
+        resultsSection.classList.remove('hidden');
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (error) {
+        console.error('Error analyzing image:', error);
+        alert('Error analyzing image. Please try again.');
+    } finally {
+        // Reset button state
+        analyzeButton.disabled = false;
+        loadingSpinner.classList.add('hidden');
+        analyzeText.classList.remove('hidden');
+    }
+}
