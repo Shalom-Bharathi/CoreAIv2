@@ -818,7 +818,7 @@ async function saveDietPlan(dietPlan) {
             // Wait a moment to ensure Firestore updates are complete
             setTimeout(() => {
                 console.log('Redirecting to diet home page...');
-                window.location.href = '../diet-home/index.html';
+        window.location.href = '../diet-home/index.html';
             }, 1000);
         } else {
             throw new Error('Diet plan was not saved properly');

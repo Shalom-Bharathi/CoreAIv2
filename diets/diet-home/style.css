@@ -693,32 +693,32 @@ h1, h2, h3, h4, h5, h6 {
 /* Responsive adjustments */
 @media (max-width: 1400px) {
   .overview-cards {
-    grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
   .charts-grid {
-    grid-template-columns: 1fr;
+      grid-template-columns: 1fr;
     gap: 3rem;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar {
-    width: 0;
-    transform: translateX(-100%);
+      width: 0;
+      transform: translateX(-100%);
   }
   
   .main-content {
-    margin-left: 0;
-    padding: 1.5rem;
+      margin-left: 0;
+      padding: 1.5rem;
   }
   
   .overview-cards,
   .guidelines-grid,
   .micro-grid {
-    grid-template-columns: 1fr;
+      grid-template-columns: 1fr;
     gap: 1.5rem;
   }
   
@@ -728,20 +728,20 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .card {
-    padding: 1.5rem;
+      padding: 1.5rem;
   }
   
   .macro-ring {
-    width: 120px;
-    height: 120px;
+      width: 120px;
+      height: 120px;
   }
   
   .ring-label .percentage {
-    font-size: 1.5rem;
+      font-size: 1.5rem;
   }
   
   .dashboard-header h1 {
-    font-size: 2rem;
+      font-size: 2rem;
   }
 }
 
