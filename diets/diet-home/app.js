@@ -15,10 +15,12 @@ class DietDashboard {
 
   async initialize() {
     try {
+      console.log('Initializing dashboard...');
+      await this.initializeOpenAI();
       await this.setupEventListeners();
       await this.loadDietPlan();
-      await this.initializeOpenAI();
       await this.initializeImageAnalysis();
+      console.log('Dashboard initialization complete');
     } catch (error) {
       console.error('Error initializing dashboard:', error);
     }
@@ -26,6 +28,7 @@ class DietDashboard {
 
   async initializeOpenAI() {
     try {
+      console.log('Initializing OpenAI...');
       // Get API key from Firebase
       const apiSnapshot = await this.db.collection('API').get();
       let API_KEY = null;
@@ -37,13 +40,18 @@ class DietDashboard {
         throw new Error('API key not found');
       }
 
+      // Check if OpenAI is available
+      if (typeof OpenAI === 'undefined') {
+        throw new Error('OpenAI SDK not loaded');
+      }
+
       // Initialize OpenAI client
       openaiClient = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true
       });
       
-      console.log('OpenAI client initialized');
+      console.log('OpenAI client initialized successfully');
     } catch (error) {
       console.error('Error initializing OpenAI client:', error);
       throw error;
