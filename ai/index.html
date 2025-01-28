@@ -34,34 +34,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-content">
-                <div class="logo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <span class="logo-text">CoreAI</span>
-                </div>
-                
-                <nav class="nav-links">
-                    <a href="../index.html" class="nav-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="../diets/diet-home/index.html" class="nav-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                        <span>Diet Home</span>
-                    </a>
-                    <a href="../workouts/index.html" class="nav-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                        <span>Workouts</span>
-                    </a>
-                    <a href="./index.html" class="nav-link active">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.1 0 2 .9 2 2v7c0 1.1-.9 2-2 2s-2-.9-2-2V4c0-1.1.9-2 2-2z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                        <span>AI Assistant</span>
-                    </a>
-                </nav>
-            </div>
-        </aside>
+
 
         <!-- Main Content -->
         <main class="main-content">
@@ -75,7 +48,7 @@
                         <h1>Meet Your AI Assistant</h1>
                         <p class="assistant-subtitle">Your intelligent health and fitness companion, powered by advanced AI</p>
                     </div>
-
+                    <br><br><br><br><br><br><br><br><br><br>
                     <div class="assistant-features">
                         <div class="feature-card">
                             <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1.1 0 2 .9 2 2v7c0 1.1-.9 2-2 2s-2-.9-2-2V4c0-1.1.9-2 2-2z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -96,7 +69,6 @@
 
                     <div class="assistant-prompt">
                         <p>Click the AI button to start your conversation</p>
-                        <div class="prompt-arrow"></div>
                     </div>
                 </div>
             </div>
@@ -109,10 +81,10 @@
         const assistant = "2ebcf5af-0544-49da-86da-73e48142818b";
         const apiKey = "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0";
         const buttonConfig = {
-            position: "bottom-right",
-            offset: "40px",
-            width: "80px",
-            height: "80px",
+            position: "top",
+            offset: "330px",
+            width: "200px",
+            height: "200px",
             idle: {
                 icon: `../assets/bot.svg`,
                 backgroundColor: "#6366f1",
