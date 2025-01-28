@@ -43,7 +43,6 @@
   
   <!-- Initialize auth check after app is loaded -->
   <script>
-    // Remove the existing Vapi script and replace with this
     window.dietPlan = "";
     window.vapiInstance = null;
 
@@ -54,6 +53,9 @@
           console.error('No user logged in');
           return;
         }
+
+        // Initialize the dashboard first
+        window.dietDashboard = new DietDashboard(user);
 
         // First try to get from users collection
         const userDoc = await firebase.firestore().collection('users')
@@ -140,6 +142,9 @@
         window.location.href = '../../index.html';
       } else {
         console.log('User authenticated:', user.email);
+        // Initialize DietDashboard first
+        window.dietDashboard = new DietDashboard(user);
+        // Then load diet plan for Vapi
         loadDietPlan();
       }
     });
