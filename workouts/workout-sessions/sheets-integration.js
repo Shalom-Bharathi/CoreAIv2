@@ -8,50 +8,68 @@ const SPREADSHEET_ID = '1YOUR_SPREADSHEET_ID'; // Replace with your actual sprea
 
 export class SheetsIntegration {
   constructor() {
-    this.initialized = false;
+    this.accessToken = null;
   }
 
-  async initialize() {
-    if (this.initialized) return;
+  async getAccessToken() {
+    const now = Math.floor(Date.now() / 1000);
+    const claim = {
+      iss: CREDENTIALS.client_email,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now
+    };
 
-    try {
-      // Load the Google API client
-      await new Promise((resolve, reject) => {
-        if (typeof gapi !== 'undefined') {
-          resolve();
-        } else {
-          const script = document.createElement('script');
-          script.src = 'https://apis.google.com/js/api.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        }
-      });
+    // Create JWT
+    const header = { alg: 'RS256', typ: 'JWT' };
+    const headerBase64 = btoa(JSON.stringify(header));
+    const claimBase64 = btoa(JSON.stringify(claim));
+    const unsignedJwt = `${headerBase64}.${claimBase64}`;
 
-      await new Promise((resolve) => gapi.load('client', resolve));
-      
-      await gapi.client.init({
-        apiKey: 'AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE',
-        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-      });
+    // Sign JWT using Web Crypto API
+    const keyData = this._parsePrivateKey(CREDENTIALS.private_key);
+    const key = await crypto.subtle.importKey(
+      'pkcs8',
+      keyData,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign']
+    );
 
-      this.initialized = true;
-      console.log('Google Sheets API initialized');
-    } catch (error) {
-      console.error('Error initializing Google Sheets:', error);
-      throw error;
-    }
+    const signature = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      key,
+      new TextEncoder().encode(unsignedJwt)
+    );
+
+    const jwt = `${unsignedJwt}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
+
+    // Exchange JWT for access token
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    const data = await response.json();
+    return data.access_token;
   }
 
   async saveWorkoutCompletion(workoutData) {
     try {
-      if (!this.initialized) {
-        await this.initialize();
+      if (!this.accessToken) {
+        this.accessToken = await this.getAccessToken();
       }
 
       const values = [
         [
-          new Date().toISOString(), // Timestamp
+          new Date().toISOString(),
           workoutData.userId,
           workoutData.workoutName,
           workoutData.workoutId,
@@ -64,14 +82,22 @@ export class SheetsIntegration {
         ]
       ];
 
-      const request = {
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Workouts!A:J',
-        valueInputOption: 'RAW',
-        resource: { values }
-      };
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Workouts!A:J:append?valueInputOption=RAW`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ values })
+        }
+      );
 
-      await gapi.client.sheets.spreadsheets.values.append(request);
+      if (!response.ok) {
+        throw new Error(`Failed to save to sheets: ${response.statusText}`);
+      }
+
       console.log('Workout completion saved to Google Sheets');
     } catch (error) {
       console.error('Error saving to Google Sheets:', error);
