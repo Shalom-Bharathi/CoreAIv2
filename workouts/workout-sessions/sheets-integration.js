@@ -9,64 +9,73 @@ const SPREADSHEET_ID = '1YOUR_SPREADSHEET_ID'; // Replace with your actual sprea
 export class SheetsIntegration {
   constructor() {
     this.accessToken = null;
+    this.initialized = false;
   }
 
-  async getAccessToken() {
-    const now = Math.floor(Date.now() / 1000);
-    const claim = {
-      iss: CREDENTIALS.client_email,
-      scope: 'https://www.googleapis.com/auth/spreadsheets',
-      aud: 'https://oauth2.googleapis.com/token',
-      exp: now + 3600,
-      iat: now
-    };
+  async initialize() {
+    if (this.initialized) return;
 
-    // Create JWT
-    const header = { alg: 'RS256', typ: 'JWT' };
-    const headerBase64 = btoa(JSON.stringify(header));
-    const claimBase64 = btoa(JSON.stringify(claim));
-    const unsignedJwt = `${headerBase64}.${claimBase64}`;
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const claim = {
+        iss: CREDENTIALS.client_email,
+        scope: 'https://www.googleapis.com/auth/spreadsheets',
+        aud: 'https://oauth2.googleapis.com/token',
+        exp: now + 3600,
+        iat: now
+      };
 
-    // Sign JWT using Web Crypto API
-    const keyData = this._parsePrivateKey(CREDENTIALS.private_key);
-    const key = await crypto.subtle.importKey(
-      'pkcs8',
-      keyData,
-      {
-        name: 'RSASSA-PKCS1-v1_5',
-        hash: 'SHA-256',
-      },
-      false,
-      ['sign']
-    );
+      // Create JWT
+      const header = { alg: 'RS256', typ: 'JWT' };
+      const headerBase64 = btoa(JSON.stringify(header));
+      const claimBase64 = btoa(JSON.stringify(claim));
+      const unsignedJwt = `${headerBase64}.${claimBase64}`;
 
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      key,
-      new TextEncoder().encode(unsignedJwt)
-    );
+      // Sign JWT using Web Crypto API
+      const keyData = this._parsePrivateKey(CREDENTIALS.private_key);
+      const key = await crypto.subtle.importKey(
+        'pkcs8',
+        keyData,
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: 'SHA-256',
+        },
+        false,
+        ['sign']
+      );
 
-    const jwt = `${unsignedJwt}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
+      const signature = await crypto.subtle.sign(
+        'RSASSA-PKCS1-v1_5',
+        key,
+        new TextEncoder().encode(unsignedJwt)
+      );
 
-    // Exchange JWT for access token
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    });
+      const jwt = `${unsignedJwt}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
 
-    const data = await response.json();
-    return data.access_token;
+      // Exchange JWT for access token
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+      });
+
+      const data = await response.json();
+      this.accessToken = data.access_token;
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing sheets:', error);
+      throw error;
+    }
   }
 
   async saveWorkoutCompletion(workoutData) {
-    try {
-      if (!this.accessToken) {
-        this.accessToken = await this.getAccessToken();
-      }
+    if (!this.initialized) {
+      await this.initialize();
+    }
 
+    try {
       const values = [
         [
           new Date().toISOString(),
