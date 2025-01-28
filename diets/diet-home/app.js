@@ -235,8 +235,31 @@ class DietDashboard {
 }
 
 // Initialize the dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM Content Loaded - Dashboard ready for initialization');
+  
+  try {
+    // Get API key from Firebase
+    const apiSnapshot = await firebase.firestore().collection('API').get();
+    let API_KEY = null;
+    apiSnapshot.forEach(doc => {
+      API_KEY = doc.data().API;
+    });
+
+    if (!API_KEY) {
+      throw new Error('API key not found');
+    }
+
+    // Initialize OpenAI client
+    openaiClient = new OpenAI({
+      apiKey: API_KEY,
+      dangerouslyAllowBrowser: true
+    });
+    
+    console.log('OpenAI client initialized');
+  } catch (error) {
+    console.error('Error initializing OpenAI client:', error);
+  }
 });
 
 function renderDietaryGuidelines(guidelines) {
@@ -333,26 +356,6 @@ function renderPhysicalActivityPlan(activities) {
   });
 }
 
-// Initialize OpenAI with API key from Firebase
-let openaiClient = null;
-
-async function initializeOpenAI() {
-  const apiSnapshot = await firebase.firestore().collection('API').get();
-  let API_KEY = null;
-  apiSnapshot.forEach(doc => {
-    API_KEY = doc.data().API;
-  });
-
-  if (!API_KEY) {
-    throw new Error('API key not found');
-  }
-
-  openaiClient = new OpenAI({
-    apiKey: API_KEY,
-    dangerouslyAllowBrowser: true
-  });
-}
-
 // DOM Elements
 const imageInput = document.getElementById('imageInput');
 const imagePreview = document.getElementById('image-preview');
@@ -363,16 +366,6 @@ const analyzeText = document.getElementById('analyze-text');
 const resultsSection = document.getElementById('results-section');
 
 let selectedImage = null;
-
-// Initialize OpenAI when the page loads
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await initializeOpenAI();
-    console.log('OpenAI client initialized');
-  } catch (error) {
-    console.error('Error initializing OpenAI client:', error);
-  }
-});
 
 // Handle image upload
 window.handleImageUpload = (event) => {
@@ -462,18 +455,7 @@ window.analyzeImage = async () => {
           content: [
             {
               type: "text",
-              text: `Analyze this food image and provide a JSON response with the following information:
-              {
-                "foodName": "name of the dish",
-                "ingredients": "list of main ingredients",
-                "calories": "estimated calories",
-                "macronutrients": {
-                  "protein": "protein amount",
-                  "carbs": "carbs amount",
-                  "fat": "fat amount"
-                },
-                "dietCompatibility": "compatibility with ${dietType} diet and explanation"
-              }`
+              text: "What's in this image?"
             },
             {
               type: "image_url",
@@ -492,48 +474,12 @@ window.analyzeImage = async () => {
       throw new Error('No content in response');
     }
 
-    // Parse the response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('No JSON found in response');
-    }
-    const analysis = JSON.parse(jsonMatch[0]);
-
     // Create results HTML
     const resultsHTML = `
       <div class="results-content">
         <div class="result-item">
-          <h3>Food Name</h3>
-          <p>${analysis.foodName}</p>
-        </div>
-        <div class="result-item">
-          <h3>Ingredients</h3>
-          <p>${analysis.ingredients}</p>
-        </div>
-        <div class="result-item">
-          <h3>Calories</h3>
-          <p>${analysis.calories}</p>
-        </div>
-        <div class="result-item">
-          <h3>Macronutrients</h3>
-          <div class="macro-grid">
-            <div class="macro-item">
-              <span class="label">Protein</span>
-              <span class="value">${analysis.macronutrients.protein}</span>
-            </div>
-            <div class="macro-item">
-              <span class="label">Carbs</span>
-              <span class="value">${analysis.macronutrients.carbs}</span>
-            </div>
-            <div class="macro-item">
-              <span class="label">Fat</span>
-              <span class="value">${analysis.macronutrients.fat}</span>
-            </div>
-          </div>
-        </div>
-        <div class="result-item">
-          <h3>Diet Compatibility</h3>
-          <p>${analysis.dietCompatibility}</p>
+          <h3>Analysis Result</h3>
+          <p>${content}</p>
         </div>
       </div>
     `;
