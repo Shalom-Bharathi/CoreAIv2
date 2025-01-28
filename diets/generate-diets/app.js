@@ -296,7 +296,7 @@ async function generateResponse(userInput) {
         'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [{
           role: 'user',
           content: prompt
@@ -563,7 +563,7 @@ async function generateDietPlan() {
         'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [{
           role: 'user',
           content: prompt
