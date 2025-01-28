@@ -1,3 +1,6 @@
+// Global OpenAI client
+let openaiClient = null;
+
 class DietDashboard {
   constructor(user) {
     if (!user) {
@@ -9,6 +12,53 @@ class DietDashboard {
     this.db = firebase.firestore();
     this.setupEventListeners();
     this.loadDietPlan();
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      // Get API key from Firebase
+      const apiSnapshot = await this.db.collection('API').get();
+      let API_KEY = null;
+      apiSnapshot.forEach(doc => {
+        API_KEY = doc.data().API;
+      });
+
+      if (!API_KEY) {
+        throw new Error('API key not found');
+      }
+
+      // Initialize OpenAI client
+      openaiClient = new OpenAI({
+        apiKey: API_KEY,
+        dangerouslyAllowBrowser: true
+      });
+      
+      console.log('OpenAI client initialized');
+      this.initializeImageAnalysis();
+    } catch (error) {
+      console.error('Error initializing OpenAI client:', error);
+    }
+  }
+
+  initializeImageAnalysis() {
+    // DOM Elements
+    this.imageInput = document.getElementById('imageInput');
+    this.imagePreview = document.getElementById('image-preview');
+    this.previewImg = document.getElementById('previewImg');
+    this.analyzeButton = document.getElementById('analyze-button');
+    this.loadingSpinner = document.getElementById('loading-spinner');
+    this.analyzeText = document.getElementById('analyze-text');
+    this.resultsSection = document.getElementById('results-section');
+    this.selectedImage = null;
+
+    // Bind event handlers
+    if (this.imageInput) {
+      this.imageInput.addEventListener('change', this.handleImageUpload.bind(this));
+    }
+    if (this.analyzeButton) {
+      this.analyzeButton.addEventListener('click', this.analyzeImage.bind(this));
+    }
   }
 
   setupEventListeners() {
@@ -232,35 +282,126 @@ class DietDashboard {
       this.showError('Error displaying diet plan information.');
     }
   }
-}
 
-// Initialize the dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM Content Loaded - Dashboard ready for initialization');
-  
-  try {
-    // Get API key from Firebase
-    const apiSnapshot = await firebase.firestore().collection('API').get();
-    let API_KEY = null;
-    apiSnapshot.forEach(doc => {
-      API_KEY = doc.data().API;
-    });
+  handleImageUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    if (!API_KEY) {
-      throw new Error('API key not found');
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
     }
 
-    // Initialize OpenAI client
-    openaiClient = new OpenAI({
-      apiKey: API_KEY,
-      dangerouslyAllowBrowser: true
-    });
-    
-    console.log('OpenAI client initialized');
-  } catch (error) {
-    console.error('Error initializing OpenAI client:', error);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (!e.target?.result) return;
+      
+      this.selectedImage = e.target.result;
+      if (this.previewImg && this.imagePreview) {
+        this.previewImg.src = this.selectedImage;
+        this.imagePreview.classList.remove('hidden');
+        if (this.analyzeButton) {
+          this.analyzeButton.disabled = false;
+        }
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading file');
+      console.error('FileReader error:', reader.error);
+    };
+    reader.readAsDataURL(file);
   }
-});
+
+  clearImage() {
+    this.selectedImage = null;
+    if (this.imagePreview) {
+      this.imagePreview.classList.add('hidden');
+    }
+    if (this.imageInput) {
+      this.imageInput.value = '';
+    }
+    if (this.analyzeButton) {
+      this.analyzeButton.disabled = true;
+    }
+    if (this.resultsSection) {
+      this.resultsSection.classList.add('hidden');
+    }
+  }
+
+  async analyzeImage() {
+    if (!this.selectedImage) {
+      alert('Please select an image first');
+      return;
+    }
+
+    if (!openaiClient) {
+      alert('OpenAI client not initialized. Please try again.');
+      return;
+    }
+
+    try {
+      // Show loading state
+      if (this.analyzeButton) this.analyzeButton.disabled = true;
+      if (this.loadingSpinner) this.loadingSpinner.classList.remove('hidden');
+      if (this.analyzeText) this.analyzeText.classList.add('hidden');
+      if (this.resultsSection) this.resultsSection.classList.add('hidden');
+
+      // Make API request to OpenAI
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "What's in this image?"
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: this.selectedImage
+                }
+              }
+            ]
+          }
+        ],
+        store: true
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No content in response');
+      }
+
+      // Create results HTML
+      const resultsHTML = `
+        <div class="results-content">
+          <div class="result-item">
+            <h3>Analysis Result</h3>
+            <p>${content}</p>
+          </div>
+        </div>
+      `;
+
+      // Update results
+      if (this.resultsSection) {
+        this.resultsSection.innerHTML = resultsHTML;
+        this.resultsSection.classList.remove('hidden');
+        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      alert('Error analyzing image. Please try again.');
+    } finally {
+      // Reset button state
+      if (this.analyzeButton) this.analyzeButton.disabled = false;
+      if (this.loadingSpinner) this.loadingSpinner.classList.add('hidden');
+      if (this.analyzeText) this.analyzeText.classList.remove('hidden');
+    }
+  }
+}
 
 function renderDietaryGuidelines(guidelines) {
   const container = document.getElementById('dietaryGuidelines');
@@ -355,149 +496,3 @@ function renderPhysicalActivityPlan(activities) {
     container.appendChild(item);
   });
 }
-
-// DOM Elements
-const imageInput = document.getElementById('imageInput');
-const imagePreview = document.getElementById('image-preview');
-const previewImg = document.getElementById('previewImg');
-const analyzeButton = document.getElementById('analyze-button');
-const loadingSpinner = document.getElementById('loading-spinner');
-const analyzeText = document.getElementById('analyze-text');
-const resultsSection = document.getElementById('results-section');
-
-let selectedImage = null;
-
-// Handle image upload
-window.handleImageUpload = (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    alert('Please select an image file');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    if (!e.target?.result) return;
-    
-    selectedImage = e.target.result;
-    if (previewImg && imagePreview) {
-      previewImg.src = selectedImage;
-      imagePreview.classList.remove('hidden');
-      if (analyzeButton) {
-        analyzeButton.disabled = false;
-      }
-    }
-  };
-  reader.onerror = () => {
-    alert('Error reading file');
-    console.error('FileReader error:', reader.error);
-  };
-  reader.readAsDataURL(file);
-};
-
-// Clear the selected image
-window.clearImage = () => {
-  selectedImage = null;
-  if (imagePreview) {
-    imagePreview.classList.add('hidden');
-  }
-  if (imageInput) {
-    imageInput.value = '';
-  }
-  if (analyzeButton) {
-    analyzeButton.disabled = true;
-  }
-  if (resultsSection) {
-    resultsSection.classList.add('hidden');
-  }
-};
-
-// Analyze the image
-window.analyzeImage = async () => {
-  if (!selectedImage) {
-    alert('Please select an image first');
-    return;
-  }
-
-  if (!openaiClient) {
-    alert('OpenAI client not initialized. Please try again.');
-    return;
-  }
-
-  try {
-    // Show loading state
-    if (analyzeButton) analyzeButton.disabled = true;
-    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
-    if (analyzeText) analyzeText.classList.add('hidden');
-    if (resultsSection) resultsSection.classList.add('hidden');
-
-    // Get user's diet type from Firebase
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    let dietType = 'balanced';
-    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
-    if (userData?.dietPlan?.diet_type) {
-      dietType = userData.dietPlan.diet_type;
-    }
-
-    // Make API request to OpenAI
-    const response = await openaiClient.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "What's in this image?"
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: selectedImage
-              }
-            }
-          ]
-        }
-      ],
-      store: true
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No content in response');
-    }
-
-    // Create results HTML
-    const resultsHTML = `
-      <div class="results-content">
-        <div class="result-item">
-          <h3>Analysis Result</h3>
-          <p>${content}</p>
-        </div>
-      </div>
-    `;
-
-    // Update results
-    if (resultsSection) {
-      resultsSection.innerHTML = resultsHTML;
-      resultsSection.classList.remove('hidden');
-      resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-
-  } catch (error) {
-    console.error('Error analyzing image:', error);
-    alert('Error analyzing image. Please try again.');
-  } finally {
-    // Reset button state
-    if (analyzeButton) analyzeButton.disabled = false;
-    if (loadingSpinner) loadingSpinner.classList.add('hidden');
-    if (analyzeText) analyzeText.classList.remove('hidden');
-  }
-};
