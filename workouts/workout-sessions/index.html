@@ -222,6 +222,60 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
     </div>
   </div>
 
+  <!-- Replace the existing Vapi script with this -->
+  <script>
+    // Load workout plan first
+    const workoutData = JSON.parse(localStorage.getItem('currentWorkout'));
+    window.workoutPlan = workoutData ? JSON.stringify({
+      name: workoutData.name,
+      type: workoutData.type,
+      difficulty: workoutData.difficulty,
+      duration: workoutData.duration,
+      exercises: workoutData.exercises.map(ex => ({
+        name: ex.name,
+        duration: ex.duration,
+        sets: ex.sets,
+        rest: ex.rest,
+        phase: ex.phase,
+        instructions: ex.instructions
+      }))
+    }, null, 2) : "No workout plan found";
+
+    // Initialize Vapi with the workout plan
+    const script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+    script.onload = function() {
+      window.vapiInstance = window.vapiSDK.run({
+        apiKey: "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0",
+        assistant: {
+          model: {
+            provider: "openai",
+            model: "gpt-4o",
+            systemPrompt: `You are CoreAI, an advanced AI assistant focused on personalized workout guidance. This is the user's workout plan: ${window.workoutPlan}`
+          },
+          voice: {
+            provider: "11labs",
+            voiceId: "XiPS9cXxAVbaIWtGDHDh"
+          },
+          firstMessage: "Hey I'm Core AI! I can help you understand and optimize your workout plan."
+        },
+        config: {
+          position: "top-right",
+          offset: "50px",
+          width: "100px",
+          height: "100px",
+          idle: { 
+            icon: "../../assets/bot2.svg"
+          },
+          active: {
+            icon: "../../assets/bot-off2.svg"
+          }
+        }
+      });
+    };
+    document.head.appendChild(script);
+  </script>
+
   <style>
     .workout-session {
       padding: 0;
@@ -454,7 +508,7 @@ unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
     }
   </style>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
 

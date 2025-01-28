@@ -32,6 +32,60 @@ class WorkoutSession {
     this.toggleMusic = this.toggleMusic.bind(this);
     this.handleVolumeChange = this.handleVolumeChange.bind(this);
     this.initializeAudio = this.initializeAudio.bind(this);
+
+    // Load workout and initialize Vapi
+    this.loadWorkout().then(() => {
+      if (this.workout) {
+        window.workoutPlan = JSON.stringify({
+          name: this.workout.name,
+          type: this.workout.type,
+          difficulty: this.workout.difficulty,
+          duration: this.workout.duration,
+          exercises: this.workout.exercises.map(ex => ({
+            name: ex.name,
+            duration: ex.duration,
+            sets: ex.sets,
+            rest: ex.rest,
+            phase: ex.phase,
+            instructions: ex.instructions
+          }))
+        }, null, 2);
+
+        // Initialize Vapi
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        script.onload = function() {
+          window.vapiInstance = window.vapiSDK.run({
+            apiKey: "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0",
+            assistant: {
+              model: {
+                provider: "openai",
+                model: "gpt-4o",
+                systemPrompt: `You are CoreAI, an advanced AI assistant focused on personalized workout guidance. This is the user's workout plan: ${window.workoutPlan}`
+              },
+              voice: {
+                provider: "11labs",
+                voiceId: "XiPS9cXxAVbaIWtGDHDh"
+              },
+              firstMessage: "Hey I'm Core AI! I can help you understand and optimize your workout plan."
+            },
+            config: {
+              position: "top-right",
+              offset: "50px",
+              width: "100px",
+              height: "100px",
+              idle: { 
+                icon: "../../assets/bot2.svg"
+              },
+              active: {
+                icon: "../../assets/bot-off2.svg"
+              }
+            }
+          });
+        };
+        document.head.appendChild(script);
+      }
+    });
   }
 
   async initializeAudio() {
