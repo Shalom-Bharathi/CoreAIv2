@@ -10,11 +10,44 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
   
+  <!-- OpenAI SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/openai@4.28.0/dist/index.min.js"></script>
+  
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   
+  <!-- OpenAI Configuration -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    // Configure OpenAI
+    let API_KEY;
+    let thingsRefx;
+    let unsubscribex;
+
+    thingsRefx = db.collection('API');
+
+    // Wait for API key to be loaded before allowing interactions
+    unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
+      querySnapshot.docs.forEach(doc => {
+        API_KEY = doc.data().API;
+        console.log("OpenAI API Key loaded");
+        // Initialize after API key is loaded
+        if (!document.querySelector('.diet-experience-container')) {
+          initializeDietGeneration();
+        }
+      });
+    });
+    const openai = axios.create({
+      baseURL: 'https://api.openai.com/v1',
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  </script>
+
   <!-- Firebase Initialization -->
   <script>
     const firebaseConfig = {
@@ -39,7 +72,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   
   <!-- Load our app script after Firebase is initialized -->
-  <script src="./app.js"></script>
+  <script src="./app.js" defer></script>
   
   <!-- Initialize auth check after app is loaded -->
   <script>
@@ -55,9 +88,6 @@
       }
     });
   </script>
-
-  <!-- Add OpenAI CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/openai@4.28.0/index.min.js"></script>
 
 </head>
 <body>

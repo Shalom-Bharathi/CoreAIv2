@@ -333,8 +333,25 @@ function renderPhysicalActivityPlan(activities) {
   });
 }
 
-// Initialize OpenAI
-const openai = new OpenAI();
+// Initialize OpenAI with API key from Firebase
+let openaiClient = null;
+
+async function initializeOpenAI() {
+  const apiSnapshot = await firebase.firestore().collection('API').get();
+  let API_KEY = null;
+  apiSnapshot.forEach(doc => {
+    API_KEY = doc.data().API;
+  });
+
+  if (!API_KEY) {
+    throw new Error('API key not found');
+  }
+
+  openaiClient = new OpenAI({
+    apiKey: API_KEY,
+    dangerouslyAllowBrowser: true
+  });
+}
 
 // DOM Elements
 const imageInput = document.getElementById('imageInput');
@@ -347,35 +364,194 @@ const resultsSection = document.getElementById('results-section');
 
 let selectedImage = null;
 
+// Initialize OpenAI when the page loads
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await initializeOpenAI();
+    console.log('OpenAI client initialized');
+  } catch (error) {
+    console.error('Error initializing OpenAI client:', error);
+  }
+});
+
 // Handle image upload
 window.handleImageUpload = (event) => {
   const file = event.target.files?.[0];
-  if (file) {
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      selectedImage = e.target.result;
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (!e.target?.result) return;
+    
+    selectedImage = e.target.result;
+    if (previewImg && imagePreview) {
       previewImg.src = selectedImage;
       imagePreview.classList.remove('hidden');
-      analyzeButton.disabled = false;
-    };
-    reader.onerror = () => {
-      alert('Error reading file');
-      console.error('FileReader error:', reader.error);
-    };
-    reader.readAsDataURL(file);
-  }
+      if (analyzeButton) {
+        analyzeButton.disabled = false;
+      }
+    }
+  };
+  reader.onerror = () => {
+    alert('Error reading file');
+    console.error('FileReader error:', reader.error);
+  };
+  reader.readAsDataURL(file);
 };
 
 // Clear the selected image
 window.clearImage = () => {
   selectedImage = null;
-  imagePreview.classList.add('hidden');
-  imageInput.value = '';
-  analyzeButton.disabled = true;
-  resultsSection.classList.add('hidden');
+  if (imagePreview) {
+    imagePreview.classList.add('hidden');
+  }
+  if (imageInput) {
+    imageInput.value = '';
+  }
+  if (analyzeButton) {
+    analyzeButton.disabled = true;
+  }
+  if (resultsSection) {
+    resultsSection.classList.add('hidden');
+  }
+};
+
+// Analyze the image
+window.analyzeImage = async () => {
+  if (!selectedImage) {
+    alert('Please select an image first');
+    return;
+  }
+
+  if (!openaiClient) {
+    alert('OpenAI client not initialized. Please try again.');
+    return;
+  }
+
+  try {
+    // Show loading state
+    if (analyzeButton) analyzeButton.disabled = true;
+    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+    if (analyzeText) analyzeText.classList.add('hidden');
+    if (resultsSection) resultsSection.classList.add('hidden');
+
+    // Get user's diet type from Firebase
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    let dietType = 'balanced';
+    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+    const userData = userDoc.data();
+    if (userData?.dietPlan?.diet_type) {
+      dietType = userData.dietPlan.diet_type;
+    }
+
+    // Make API request to OpenAI
+    const response = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this food image and provide a JSON response with the following information:
+              {
+                "foodName": "name of the dish",
+                "ingredients": "list of main ingredients",
+                "calories": "estimated calories",
+                "macronutrients": {
+                  "protein": "protein amount",
+                  "carbs": "carbs amount",
+                  "fat": "fat amount"
+                },
+                "dietCompatibility": "compatibility with ${dietType} diet and explanation"
+              }`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: selectedImage
+              }
+            }
+          ]
+        }
+      ],
+      store: true
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No content in response');
+    }
+
+    // Parse the response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No JSON found in response');
+    }
+    const analysis = JSON.parse(jsonMatch[0]);
+
+    // Create results HTML
+    const resultsHTML = `
+      <div class="results-content">
+        <div class="result-item">
+          <h3>Food Name</h3>
+          <p>${analysis.foodName}</p>
+        </div>
+        <div class="result-item">
+          <h3>Ingredients</h3>
+          <p>${analysis.ingredients}</p>
+        </div>
+        <div class="result-item">
+          <h3>Calories</h3>
+          <p>${analysis.calories}</p>
+        </div>
+        <div class="result-item">
+          <h3>Macronutrients</h3>
+          <div class="macro-grid">
+            <div class="macro-item">
+              <span class="label">Protein</span>
+              <span class="value">${analysis.macronutrients.protein}</span>
+            </div>
+            <div class="macro-item">
+              <span class="label">Carbs</span>
+              <span class="value">${analysis.macronutrients.carbs}</span>
+            </div>
+            <div class="macro-item">
+              <span class="label">Fat</span>
+              <span class="value">${analysis.macronutrients.fat}</span>
+            </div>
+          </div>
+        </div>
+        <div class="result-item">
+          <h3>Diet Compatibility</h3>
+          <p>${analysis.dietCompatibility}</p>
+        </div>
+      </div>
+    `;
+
+    // Update results
+    if (resultsSection) {
+      resultsSection.innerHTML = resultsHTML;
+      resultsSection.classList.remove('hidden');
+      resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    alert('Error analyzing image. Please try again.');
+  } finally {
+    // Reset button state
+    if (analyzeButton) analyzeButton.disabled = false;
+    if (loadingSpinner) loadingSpinner.classList.add('hidden');
+    if (analyzeText) analyzeText.classList.remove('hidden');
+  }
 };
