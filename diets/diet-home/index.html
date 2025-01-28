@@ -47,18 +47,6 @@
   
   <!-- Initialize auth check after app is loaded -->
   <script>
-    class DietDashboard {
-      constructor(user) {
-        this.user = user;
-        this.initialize();
-      }
-
-      async initialize() {
-        // Initialize your dashboard functionality here
-        console.log('Dashboard initialized for user:', this.user.email);
-      }
-    }
-
     // Initialize auth and check state
     firebase.auth().onAuthStateChanged((user) => {
       if (!user) {

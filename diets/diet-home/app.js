@@ -10,12 +10,21 @@ class DietDashboard {
     
     this.user = user;
     this.db = firebase.firestore();
-    this.setupEventListeners();
-    this.loadDietPlan();
     this.initialize();
   }
 
   async initialize() {
+    try {
+      await this.setupEventListeners();
+      await this.loadDietPlan();
+      await this.initializeOpenAI();
+      await this.initializeImageAnalysis();
+    } catch (error) {
+      console.error('Error initializing dashboard:', error);
+    }
+  }
+
+  async initializeOpenAI() {
     try {
       // Get API key from Firebase
       const apiSnapshot = await this.db.collection('API').get();
@@ -35,9 +44,9 @@ class DietDashboard {
       });
       
       console.log('OpenAI client initialized');
-      this.initializeImageAnalysis();
     } catch (error) {
       console.error('Error initializing OpenAI client:', error);
+      throw error;
     }
   }
 
