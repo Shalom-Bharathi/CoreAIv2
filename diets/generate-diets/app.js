@@ -44,7 +44,7 @@ const questions = [
 ];
 
 // Voice configuration
-const USE_ELEVEN_LABS = false; // Set to true to use ElevenLabs, false for browser speech
+const USE_ELEVEN_LABS = true; // Set to true to use ElevenLabs, false for browser speech
 let ELEVEN_LABS_KEY;
 
 // Get ElevenLabs API Key if needed
