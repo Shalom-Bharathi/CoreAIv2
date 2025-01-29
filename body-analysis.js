@@ -79,11 +79,14 @@ export async function analyzeBody(imageUrl) {
     // Store the analysis in Firebase
     const user = auth.currentUser;
     if (user) {
-      await firestore.collection('bodyAnalysis').doc(user.uid).set({
-        analysis: analysisResult,
-        imageUrl,
-        timestamp: firestore.FieldValue.serverTimestamp()
-      });
+      await firestore.setDoc(
+        firestore.doc('bodyAnalysis', user.uid), 
+        {
+          analysis: analysisResult,
+          imageUrl,
+          timestamp: firestore.serverTimestamp()
+        }
+      );
     }
 
     return analysisResult;
@@ -98,8 +101,8 @@ export async function getLatestAnalysis() {
   if (!user) return null;
 
   try {
-    const doc = await firestore.collection('bodyAnalysis').doc(user.uid).get();
-    return doc.exists ? doc.data() : null;
+    const doc = await firestore.getDoc(firestore.doc('bodyAnalysis', user.uid));
+    return doc.exists() ? doc.data() : null;
   } catch (error) {
     console.error('Error fetching analysis:', error);
     return null;
