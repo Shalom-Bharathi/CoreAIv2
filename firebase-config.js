@@ -1,7 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-storage.js';
 import { 
   getFirestore, 
   collection, 
@@ -9,14 +8,11 @@ import {
   addDoc, 
   doc, 
   getDoc,
-  setDoc,
   query, 
   where, 
   orderBy, 
   limit,
-  serverTimestamp,
-  onSnapshot,
-  FieldValue
+  serverTimestamp 
 } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -32,27 +28,17 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-// Export initialized services
-export { auth, storage };
-
-// Export Firestore with all its methods
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const firestore = {
-  db,
-  collection: (path) => collection(db, path),
+  collection,
   getDocs,
   addDoc,
-  doc: (path, ...segments) => doc(db, path, ...segments),
+  doc,
   getDoc,
-  setDoc,
   query,
   where,
   orderBy,
   limit,
-  onSnapshot,
-  serverTimestamp: () => serverTimestamp(),
-  FieldValue
+  serverTimestamp
 }; 
