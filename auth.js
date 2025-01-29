@@ -1,28 +1,40 @@
-// Remove Firebase initialization imports and use the existing instance
-import { auth, firestore } from './firebase-config.js';
+// Initialize Firebase
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js';
 import { showBodyDetailsModal, hideBodyDetailsModal } from './modals.js';
 
-const provider = new firebase.auth.GoogleAuthProvider();
+const firebaseConfig = {
+  apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
+  authDomain: "coreai-82c79.firebaseapp.com",
+  projectId: "coreai-82c79",
+  storageBucket: "coreai-82c79.firebasestorage.app",
+  messagingSenderId: "97395011364",
+  appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
+  measurementId: "G-0J1RLMVEGC"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
 // Handle Authentication State Changes
 export function initAuth() {
-  auth.onAuthStateChanged(async (user) => {
-    const loginPage = document.getElementById('loginPage');
-    const appElement = document.getElementById('app');
-    
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
         // Check if user has body details
-        const userDetailsRef = firestore.collection('body-details').doc(user.uid);
-        const userDetailsDoc = await userDetailsRef.get();
+        const userDetailsRef = doc(db, 'body-details', user.uid);
+        const userDetailsDoc = await getDoc(userDetailsRef);
         
-        if (!userDetailsDoc.exists) {
+        if (!userDetailsDoc.exists()) {
           showBodyDetailsModal();
         }
 
         // Update UI
-        loginPage.style.display = 'none';
-        appElement.style.display = 'flex';
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
         
         // Update user info
         updateUserInfo(user);
@@ -30,8 +42,8 @@ export function initAuth() {
         console.error('Error checking body details:', error);
       }
     } else {
-      loginPage.style.display = 'flex';
-      appElement.style.display = 'none';
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
     }
   });
 }
@@ -50,7 +62,7 @@ export async function saveBodyDetails(details) {
   const user = auth.currentUser;
   if (user) {
     try {
-      await firestore.collection('body-details').doc(user.uid).set({
+      await setDoc(doc(db, 'body-details', user.uid), {
         ...details,
         updatedAt: new Date().toISOString()
       });
@@ -62,19 +74,16 @@ export async function saveBodyDetails(details) {
   }
 }
 
-export async function signInWithGoogle() {
-  try {
-    await auth.signInWithPopup(provider);
-  } catch (error) {
-    console.error('Error signing in with Google:', error);
-    document.getElementById('loginError').textContent = 'Error signing in. Please try again.';
-  }
+export function signInWithGoogle() {
+  signInWithPopup(auth, provider)
+    .catch((error) => {
+      console.error('Error signing in:', error);
+      document.getElementById('loginError').textContent = 'Failed to sign in. Please try again.';
+    });
 }
 
-export async function handleSignOut() {
-  try {
-    await auth.signOut();
-  } catch (error) {
+export function handleSignOut() {
+  signOut(auth).catch((error) => {
     console.error('Error signing out:', error);
-  }
+  });
 }
