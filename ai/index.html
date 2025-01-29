@@ -169,23 +169,12 @@
         script.onload = function() {
             window.vapiInstance = window.vapiSDK.run({
                 apiKey: "dc6af4fa-68ea-4a5c-85fe-00b0c9c231b0",
-                assistant: {
-                    model: {
-                        provider: "openai",
-                        model: "gpt-4o",
-                        systemPrompt: "You are CoreAI, an advanced AI assistant focused on providing comprehensive health, fitness, and nutrition guidance. You help users achieve their wellness goals through personalized recommendations and adaptive learning."
-                    },
-                    voice: {
-                        provider: "11labs",
-                        voiceId: "XiPS9cXxAVbaIWtGDHDh"
-                    },
-                    firstMessage: "Hello! I'm your CoreAI assistant. I'm here to help you achieve your health and fitness goals. What would you like to focus on today?"
-                },
+                assistant: "2ebcf5af-0544-49da-86da-73e48142818b",
                 config: {
-                    position: "bottom-right",
-                    offset: "30px",
-                    width: "60px",
-                    height: "60px",
+                    position: "top",
+                    offset: "40px",
+                    width: "200px",
+                    height: "200px",
                     idle: { 
                         icon: "../assets/bot2.svg",
                         backgroundColor: "#6366f1",
