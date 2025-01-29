@@ -648,3 +648,42 @@
     border-color: var(--primary);
     color: white;
   }
+
+
+  .recommendation-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.recommendation-item.warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.recommendation-item.alert {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.recommendation-item.info {
+    background-color: rgba(13, 110, 253, 0.1);
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.recommendation-icon {
+    flex-shrink: 0;
+}
+
+.recommendation-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
