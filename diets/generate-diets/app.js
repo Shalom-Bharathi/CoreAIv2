@@ -334,7 +334,7 @@ async function speak(text) {
   if (USE_ELEVEN_LABS && ELEVEN_LABS_KEY) {
     try {
       // Using Rachel voice - energetic and friendly female voice
-      const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+      const VOICE_ID = "XiPS9cXxAVbaIWtGDHDh";
       
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
         method: 'POST',
