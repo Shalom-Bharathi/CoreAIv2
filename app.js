@@ -247,12 +247,9 @@ let stream = null;
 let selectedImage = null;
 
 let API_KEY;
-let thingsRefx;
-let unsubscribex;
-let db = firebase.firestore();
-thingsRefx = db.collection('API');
+const thingsRef = firestore.collection('API');
 
-unsubscribex = thingsRefx.onSnapshot(querySnapshot => {
+const unsubscribe = thingsRef.onSnapshot(querySnapshot => {
   querySnapshot.docs.forEach(doc => {
     API_KEY = doc.data().API;
     console.log('API Key loaded:', API_KEY ? 'Key present' : 'Key missing');

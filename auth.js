@@ -3,6 +3,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.2.0/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js';
 import { showBodyDetailsModal, hideBodyDetailsModal } from './modals.js';
+import { auth } from './firebase-config.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
@@ -15,13 +16,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
 // Handle Authentication State Changes
 export function initAuth() {
-  onAuthStateChanged(auth, async (user) => {
+  auth.onAuthStateChanged((user) => {
+    const loginPage = document.getElementById('loginPage');
+    const app = document.getElementById('app');
+    
     if (user) {
       try {
         // Check if user has body details
@@ -33,8 +36,8 @@ export function initAuth() {
         }
 
         // Update UI
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
+        loginPage.style.display = 'none';
+        app.style.display = 'flex';
         
         // Update user info
         updateUserInfo(user);
@@ -42,8 +45,8 @@ export function initAuth() {
         console.error('Error checking body details:', error);
       }
     } else {
-      document.getElementById('loginPage').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
+      loginPage.style.display = 'flex';
+      app.style.display = 'none';
     }
   });
 }
@@ -74,16 +77,19 @@ export async function saveBodyDetails(details) {
   }
 }
 
-export function signInWithGoogle() {
-  signInWithPopup(auth, provider)
-    .catch((error) => {
-      console.error('Error signing in:', error);
-      document.getElementById('loginError').textContent = 'Failed to sign in. Please try again.';
-    });
+export async function signInWithGoogle() {
+  try {
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    console.error('Error signing in with Google:', error);
+    document.getElementById('loginError').textContent = 'Error signing in. Please try again.';
+  }
 }
 
-export function handleSignOut() {
-  signOut(auth).catch((error) => {
+export async function handleSignOut() {
+  try {
+    await auth.signOut();
+  } catch (error) {
     console.error('Error signing out:', error);
-  });
+  }
 }
