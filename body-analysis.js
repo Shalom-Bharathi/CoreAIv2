@@ -11,7 +11,7 @@ unsubscribe = thingsRef.onSnapshot(querySnapshot => {
   });
 });
 
-export async function analyzeBody(imageUrl, height, weight) {
+export async function analyzeBody(imageUrl) {
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -27,7 +27,7 @@ export async function analyzeBody(imageUrl, height, weight) {
             content: [
               {
                 type: "text",
-                text: `Analyze this body image and provide a detailed JSON response with the following information for someone who is ${height}cm tall and weighs ${weight}kg:
+                text: `Analyze this body image and provide a detailed JSON response with the following information:
                 {
                   "bodyType": "detailed body type classification (ectomorph, mesomorph, endomorph)",
                   "muscleDistribution": {
@@ -42,11 +42,15 @@ export async function analyzeBody(imageUrl, height, weight) {
                   },
                   "muscleDefinition": "detailed analysis of muscle definition and tone",
                   "posture": "analysis of posture and alignment",
-                  "estimatedBodyFatPercentage": "estimated body fat percentage",
-                  "estimatedBiologicalAge": "estimated biological age based on physical appearance",
+                  "estimatedBodyFatPercentage": "estimated body fat percentage range",
+                  "estimatedBiologicalAge": "estimated biological age range based on physical appearance",
+                  "estimatedMeasurements": {
+                    "height": "estimated height range in cm",
+                    "weight": "estimated weight range in kg"
+                  },
                   "recommendations": {
-                    "training": ["list of training recommendations"],
-                    "nutrition": ["list of nutrition recommendations"],
+                    "training": ["list of specific training recommendations based on body analysis"],
+                    "nutrition": ["list of nutrition recommendations based on body composition"],
                     "posture": ["list of posture improvement recommendations"]
                   }
                 }`
@@ -77,8 +81,6 @@ export async function analyzeBody(imageUrl, height, weight) {
     const user = firebase.auth().currentUser;
     if (user) {
       await firebase.firestore().collection('bodyAnalysis').doc(user.uid).set({
-        height,
-        weight,
         analysis: analysisResult,
         imageUrl,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
