@@ -1,3 +1,6 @@
+import { auth, firestore, storage } from './firebase-config.js';
+import { analyzeBody } from './body-analysis.js';
+
 // Data
 const data = {
   weekly: [
@@ -230,6 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
   populateRecommendations();
   initializeAnimations();
   initializeEventListeners();
+  
+  // Check for body details when user is authenticated
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      checkBodyDetails();
+    }
+  });
 });
 
 
@@ -637,13 +647,13 @@ window.analyzeBodyImage = async () => {
   analyzeText.classList.add('hidden');
 
   try {
-    // Upload image to Firebase Storage
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    const storageRef = firebase.storage().ref();
+    // Upload image to Firebase Storage
+    const storageRef = storage.ref();
     const imageRef = storageRef.child(`body-analysis/${user.uid}/${Date.now()}.jpg`);
     
     // Convert base64 to blob
@@ -654,11 +664,25 @@ window.analyzeBodyImage = async () => {
     const snapshot = await imageRef.put(blob);
     const imageUrl = await snapshot.ref.getDownloadURL();
 
-    // Call the analyzeBody function from body-analysis.js
+    // Analyze the image
     const analysis = await analyzeBody(imageUrl);
     
-    // Display the results
-    displayBodyAnalysis(analysis);
+    // Store analysis in Firestore
+    await firestore.collection('users').doc(user.uid).collection('bodyAnalysis').add({
+      analysis,
+      imageUrl,
+      timestamp: new Date()
+    });
+
+    // Close the modal
+    const modal = document.getElementById('bodyAnalysisModal');
+    if (modal) {
+      modal.remove();
+    }
+
+    // Refresh the dashboard or show success message
+    alert('Body analysis completed successfully!');
+    location.reload(); // Refresh to update dashboard with new data
   } catch (error) {
     console.error('Error analyzing body:', error);
     alert('Error analyzing body image. Please try again.');
@@ -669,4 +693,147 @@ window.analyzeBodyImage = async () => {
     loadingSpinner.classList.remove('flex');
     analyzeText.classList.remove('hidden');
   }
-}; 
+};
+
+function displayBodyAnalysis(analysis) {
+  const resultsSection = document.getElementById('body-analysis-results');
+  
+  // Update basic fields
+  document.getElementById('body-type-result').textContent = analysis.bodyType || '-';
+  document.getElementById('muscle-definition-result').textContent = analysis.muscleDefinition || '-';
+  
+  // Update muscle distribution
+  document.getElementById('upper-body-muscle-result').textContent = analysis.muscleDistribution?.upperBody || '-';
+  document.getElementById('core-muscle-result').textContent = analysis.muscleDistribution?.core || '-';
+  document.getElementById('lower-body-muscle-result').textContent = analysis.muscleDistribution?.lowerBody || '-';
+  
+  // Update fat distribution
+  document.getElementById('upper-body-fat-result').textContent = analysis.fatDistribution?.upperBody || '-';
+  document.getElementById('core-fat-result').textContent = analysis.fatDistribution?.core || '-';
+  document.getElementById('lower-body-fat-result').textContent = analysis.fatDistribution?.lowerBody || '-';
+  
+  // Update metrics
+  document.getElementById('body-fat-result').textContent = analysis.estimatedBodyFatPercentage || '-';
+  document.getElementById('biological-age-result').textContent = analysis.estimatedBiologicalAge || '-';
+  document.getElementById('height-result').textContent = analysis.estimatedMeasurements?.height || '-';
+  document.getElementById('weight-result').textContent = analysis.estimatedMeasurements?.weight || '-';
+  
+  // Update recommendations
+  const updateRecommendations = (elementId, recommendations) => {
+    const element = document.getElementById(elementId);
+    if (element && Array.isArray(recommendations)) {
+      element.innerHTML = recommendations
+        .map(rec => `<li class="recommendation-item">${rec}</li>`)
+        .join('');
+    }
+  };
+  
+  updateRecommendations('training-recommendations', analysis.recommendations?.training);
+  updateRecommendations('nutrition-recommendations', analysis.recommendations?.nutrition);
+  updateRecommendations('posture-recommendations', analysis.recommendations?.posture);
+  
+  // Show results with animation
+  resultsSection.style.opacity = '0';
+  resultsSection.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    resultsSection.style.transition = 'opacity 0.5s ease-in-out';
+    resultsSection.style.opacity = '1';
+  });
+}
+
+// Check if user has body details and show analysis form if needed
+async function checkBodyDetails() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    const bodyAnalysisRef = firestore.collection('users').doc(user.uid).collection('bodyAnalysis');
+    const latestAnalysis = await bodyAnalysisRef.orderBy('timestamp', 'desc').limit(1).get();
+
+    if (latestAnalysis.empty) {
+      showBodyAnalysisForm();
+    }
+  } catch (error) {
+    console.error('Error checking body details:', error);
+  }
+}
+
+function showBodyAnalysisForm() {
+  const modalHtml = `
+    <div class="modal" id="bodyAnalysisModal">
+      <div class="modal-content">
+        <h2>Complete Your Profile</h2>
+        <p>Please take or upload a photo for body analysis to get personalized recommendations</p>
+        
+        <div class="analysis-container">
+          <!-- Camera/Image Preview Area -->
+          <div class="preview-area">
+            <video id="body-camera-preview" class="hidden" autoplay playsinline></video>
+            
+            <div id="body-image-preview-container" class="hidden">
+              <img id="body-image-preview" alt="Body preview">
+              <button onclick="clearBodyImage()" class="clear-button" aria-label="Clear image">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div id="body-camera-placeholder" class="camera-placeholder">
+              <div class="placeholder-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+                <p>Take a photo or upload an image for body analysis</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="controls-section">
+            <div class="button-group">
+              <button onclick="toggleBodyCamera()" id="body-camera-toggle" class="control-button" aria-label="Toggle camera">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+                <span>Open Camera</span>
+              </button>
+              
+              <button id="body-capture-button" onclick="captureBodyImage()" class="control-button hidden" aria-label="Capture photo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Capture</span>
+              </button>
+
+              <label class="upload-button">
+                <input type="file" accept="image/*" onchange="handleBodyImageUpload(event)" class="hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Upload Image</span>
+              </label>
+            </div>
+
+            <button onclick="analyzeBodyImage()" id="analyze-body-button" disabled class="analyze-button">
+              <div id="body-loading-spinner" class="hidden">
+                <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+              </div>
+              <span id="analyze-body-text">Analyze Body</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add modal to the page
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+} 
