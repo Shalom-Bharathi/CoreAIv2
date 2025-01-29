@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
-  <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
-  <meta http-equiv="Access-Control-Allow-Origin" content="https://shalom-bharathi.github.io">
   <title>CoreAI Dashboard</title>
   
   <!-- Firebase SDKs -->
@@ -31,12 +28,6 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-
-    // Configure Storage CORS
-    const storage = firebase.storage();
-    storage.setCustomAuthHeaders({
-      'Access-Control-Allow-Origin': 'https://shalom-bharathi.github.io'
-    });
   </script>
 
   <!-- Styles and other resources -->
