@@ -1,251 +1,233 @@
-import { analyzeBody, getLatestAnalysis } from './body-analysis.js';
+// Data
+const data = {
+  weekly: [
+    { name: 'Mon', value: 65, calories: 2100, steps: 8000 },
+    { name: 'Tue', value: 75, calories: 2300, steps: 10000 },
+    { name: 'Wed', value: 85, calories: 2500, steps: 12000 },
+    { name: 'Thu', value: 70, calories: 2200, steps: 9000 },
+    { name: 'Fri', value: 90, calories: 2600, steps: 11000 },
+    { name: 'Sat', value: 80, calories: 2400, steps: 9500 },
+    { name: 'Sun', value: 95, calories: 2700, steps: 13000 }
+  ]
+};
 
-// Body Analysis Functions
-async function initializeBodyAnalysis() {
-  const updateButton = document.getElementById('updateBodyAnalysis');
-  const analysisForm = document.getElementById('bodyAnalysisForm');
-  const loadingIndicator = document.querySelector('.loading-indicator');
-  const resultsContent = document.querySelector('.results-content');
+const recommendations = [
+  { icon: 'trending-up', text: 'Increase cardio intensity by 10%' },
+  { icon: 'dumbbell', text: 'Focus on upper body strength today' },
+  { icon: 'heart', text: 'Take a recovery day tomorrow' },
+  { icon: 'user', text: 'Update your fitness goals' }
+];
 
-  if (!updateButton || !analysisForm || !loadingIndicator || !resultsContent) {
-    console.error('Required elements for body analysis not found');
-    return;
-  }
-
-  // Load latest analysis if available
-  const latestAnalysis = await getLatestAnalysis();
-  if (latestAnalysis) {
-    displayAnalysisResults(latestAnalysis.analysis);
-  }
-
-  // Create the image capture UI
-  analysisForm.innerHTML = `
-    <div class="capture-container">
-      <div class="capture-options">
-        <button id="takePhoto" class="capture-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-          Take Photo
-        </button>
-        <div class="or-divider">or</div>
-        <label for="uploadPhoto" class="upload-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Upload Photo
-          <input type="file" id="uploadPhoto" accept="image/*" style="display: none;">
-        </label>
-      </div>
-      <div class="camera-container" style="display: none;">
-        <video id="camera" autoplay playsinline></video>
-        <canvas id="photoCanvas" style="display: none;"></canvas>
-        <div class="camera-controls">
-          <button id="capturePhoto" class="capture-btn">Capture</button>
-          <button id="retakePhoto" class="capture-btn" style="display: none;">Retake</button>
-        </div>
-      </div>
-      <div id="imagePreview" class="image-preview"></div>
-      <button id="analyzePhoto" class="analyze-btn" style="display: none;">Analyze Photo</button>
-    </div>
-  `;
-
-  const takePhotoBtn = document.getElementById('takePhoto');
-  const uploadPhotoInput = document.getElementById('uploadPhoto');
-  const cameraContainer = document.querySelector('.camera-container');
-  const video = document.getElementById('camera');
-  const canvas = document.getElementById('photoCanvas');
-  const captureBtn = document.getElementById('capturePhoto');
-  const retakeBtn = document.getElementById('retakePhoto');
-  const imagePreview = document.getElementById('imagePreview');
-  const analyzeBtn = document.getElementById('analyzePhoto');
-  let stream = null;
-  let capturedImage = null;
-
-  updateButton.addEventListener('click', () => {
-    analysisForm.style.display = analysisForm.style.display === 'none' ? 'block' : 'none';
-    if (analysisForm.style.display === 'none' && stream) {
-      stopCamera();
+// Chart Configuration
+const chartConfig = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false
     }
-  });
-
-  takePhotoBtn.addEventListener('click', async () => {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      cameraContainer.style.display = 'block';
-      takePhotoBtn.style.display = 'none';
-      document.querySelector('.capture-options').style.display = 'none';
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please try uploading a photo instead.');
-    }
-  });
-
-  captureBtn.addEventListener('click', () => {
-    const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    capturedImage = canvas.toDataURL('image/jpeg');
-    imagePreview.innerHTML = `<img src="${capturedImage}" alt="Captured photo">`;
-    imagePreview.style.display = 'block';
-    captureBtn.style.display = 'none';
-    retakeBtn.style.display = 'block';
-    analyzeBtn.style.display = 'block';
-    stopCamera();
-  });
-
-  retakeBtn.addEventListener('click', async () => {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      cameraContainer.style.display = 'block';
-      imagePreview.style.display = 'none';
-      captureBtn.style.display = 'block';
-      retakeBtn.style.display = 'none';
-      analyzeBtn.style.display = 'none';
-      capturedImage = null;
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please try uploading a photo instead.');
-    }
-  });
-
-  uploadPhotoInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        capturedImage = e.target.result;
-        imagePreview.innerHTML = `<img src="${capturedImage}" alt="Uploaded photo">`;
-        imagePreview.style.display = 'block';
-        analyzeBtn.style.display = 'block';
-        document.querySelector('.capture-options').style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  analyzeBtn.addEventListener('click', async () => {
-    if (!capturedImage) {
-      alert('Please capture or upload a photo first');
-      return;
-    }
-
-    try {
-      loadingIndicator.style.display = 'flex';
-      resultsContent.style.display = 'none';
-      analysisForm.style.display = 'none';
-
-      // Upload image to Firebase Storage
-      const user = firebase.auth().currentUser;
-      if (!user) {
-        throw new Error('User not authenticated');
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false
       }
+    },
+    y: {
+      grid: {
+        color: 'rgba(0, 0, 0, 0.1)'
+      }
+    }
+  }
+};
 
-      // Convert base64 to blob
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-
-      const storageRef = firebase.storage().ref();
-      const imageRef = storageRef.child(`body-images/${user.uid}/${Date.now()}.jpg`);
-      await imageRef.put(blob);
-      const imageUrl = await imageRef.getDownloadURL();
-
-      // Analyze body
-      const analysis = await analyzeBody(imageUrl);
-      displayAnalysisResults(analysis);
-    } catch (error) {
-      console.error('Error during body analysis:', error);
-      alert('An error occurred during analysis. Please try again.');
-    } finally {
-      loadingIndicator.style.display = 'none';
-      resultsContent.style.display = 'grid';
+// Initialize Charts
+function initializeCharts() {
+  // Fitness Progress Chart
+  const fitnessCtx = document.getElementById('fitnessChart').getContext('2d');
+  new Chart(fitnessCtx, {
+    type: 'line',
+    data: {
+      labels: data.weekly.map(d => d.name),
+      datasets: [{
+        data: data.weekly.map(d => d.value),
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      ...chartConfig,
+      plugins: {
+        ...chartConfig.plugins,
+        tooltip: {
+          callbacks: {
+            label: (context) => `Progress: ${context.raw}%`
+          }
+        }
+      }
     }
   });
 
-  function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      stream = null;
-      video.srcObject = null;
-      cameraContainer.style.display = 'none';
-    }
-  }
+  // Calories Chart
+  const caloriesCtx = document.getElementById('caloriesChart').getContext('2d');
+  new Chart(caloriesCtx, {
+    type: 'bar',
+    data: {
+      labels: data.weekly.map(d => d.name),
+      datasets: [{
+        data: data.weekly.map(d => d.calories),
+        backgroundColor: '#4f46e5'
+      }]
+    },
+    options: chartConfig
+  });
+
+  // Steps Chart
+  const stepsCtx = document.getElementById('stepsChart').getContext('2d');
+  new Chart(stepsCtx, {
+    type: 'line',
+    data: {
+      labels: data.weekly.map(d => d.name),
+      datasets: [{
+        data: data.weekly.map(d => d.steps),
+        borderColor: '#22c55e',
+        tension: 0.4
+      }]
+    },
+    options: chartConfig
+  });
 }
 
-function displayAnalysisResults(analysis) {
-  const resultsContent = document.querySelector('.results-content');
-  if (!resultsContent || !analysis) return;
-  
-  const resultsHTML = `
-    <div class="result-item">
-      <h4>Body Type</h4>
-      <p>${analysis.bodyType}</p>
-    </div>
-    <div class="result-item">
-      <h4>Estimated Measurements</h4>
-      <p><strong>Height:</strong> ${analysis.estimatedMeasurements.height}</p>
-      <p><strong>Weight:</strong> ${analysis.estimatedMeasurements.weight}</p>
-    </div>
-    <div class="result-item">
-      <h4>Muscle Distribution</h4>
-      <p><strong>Upper Body:</strong> ${analysis.muscleDistribution.upperBody}</p>
-      <p><strong>Core:</strong> ${analysis.muscleDistribution.core}</p>
-      <p><strong>Lower Body:</strong> ${analysis.muscleDistribution.lowerBody}</p>
-    </div>
-    <div class="result-item">
-      <h4>Fat Distribution</h4>
-      <p><strong>Upper Body:</strong> ${analysis.fatDistribution.upperBody}</p>
-      <p><strong>Core:</strong> ${analysis.fatDistribution.core}</p>
-      <p><strong>Lower Body:</strong> ${analysis.fatDistribution.lowerBody}</p>
-    </div>
-    <div class="result-item">
-      <h4>Muscle Definition</h4>
-      <p>${analysis.muscleDefinition}</p>
-    </div>
-    <div class="result-item">
-      <h4>Posture Analysis</h4>
-      <p>${analysis.posture}</p>
-    </div>
-    <div class="result-item">
-      <h4>Body Composition</h4>
-      <p><strong>Estimated Body Fat:</strong> ${analysis.estimatedBodyFatPercentage}</p>
-      <p><strong>Estimated Biological Age:</strong> ${analysis.estimatedBiologicalAge}</p>
-    </div>
-    <div class="result-item">
-      <h4>Recommendations</h4>
-      <div class="recommendations-list">
-        ${analysis.recommendations ? `
-          <div class="recommendation-item">
-            <h5>Training</h5>
-            <ul>${analysis.recommendations.training.map(rec => `<li>${rec}</li>`).join('')}</ul>
-          </div>
-          <div class="recommendation-item">
-            <h5>Nutrition</h5>
-            <ul>${analysis.recommendations.nutrition.map(rec => `<li>${rec}</li>`).join('')}</ul>
-          </div>
-          <div class="recommendation-item">
-            <h5>Posture</h5>
-            <ul>${analysis.recommendations.posture.map(rec => `<li>${rec}</li>`).join('')}</ul>
-          </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
-
-  resultsContent.innerHTML = resultsHTML;
-  resultsContent.style.display = 'grid';
+// Populate Recommendations
+function populateRecommendations() {
+  const recommendationsList = document.querySelector('.recommendations-list');
+  recommendations.forEach((rec, index) => {
+    const item = document.createElement('div');
+    item.className = 'recommendation-item fade-in';
+    item.style.animationDelay = `${index * 100}ms`;
+    
+    item.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="recommendation-icon">
+        ${getIconPath(rec.icon)}
+      </svg>
+      <span class="recommendation-text">${rec.text}</span>
+    `;
+    
+    recommendationsList.appendChild(item);
+  });
 }
 
-// Initialize when user is authenticated
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    initializeBodyAnalysis();
-  }
+// Helper function to get icon paths
+function getIconPath(icon) {
+  const icons = {
+    'trending-up': '<line x1="23" y1="6" x2="17" y2="12"></line><line x1="17" y1="12" x2="11" y2="6"></line><line x1="11" y1="6" x2="1" y2="16"></line>',
+    'dumbbell': '<path d="m6.5 6.5 17.5 17.5"/><path d="m6.5 17.5 17.5-17.5"/><path d="m2 21 3-3"/><path d="m19 4 3-3"/><path d="m2 3 3 3"/><path d="m19 20 3 3"/>',
+    'heart': '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+    'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>'
+  };
+  return icons[icon] || '';
+}
+
+// Animations
+function initializeAnimations() {
+  // Add fade-in animation to stat cards
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+
+  // Add hover animations
+  const buttons = document.querySelectorAll('button');
+  buttons.forEach(button => {
+    button.addEventListener('mouseenter', () => {
+      button.style.transform = 'translateY(-2px)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Sidebar link hover effects
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      gsap.to(link, {
+        x: 4,
+        duration: 0.2,
+        ease: 'power2.out'
+      });
+    });
+    
+    link.addEventListener('mouseleave', () => {
+      gsap.to(link, {
+        x: 0,
+        duration: 0.2,
+        ease: 'power2.out'
+      });
+    });
+  });
+
+  // Chart animations
+  const chartCards = document.querySelectorAll('.chart-card');
+  chartCards.forEach((card, index) => {
+    gsap.from(card, {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      delay: 0.2 + (index * 0.1),
+      ease: 'power2.out'
+    });
+  });
+}
+
+// Event Listeners
+function initializeEventListeners() {
+  // Chart period buttons
+  const chartButtons = document.querySelectorAll('.chart-button');
+  chartButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      chartButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+    });
+  });
+
+  // Start Workout button
+  const startWorkoutBtn = document.querySelector('.button-primary');
+  startWorkoutBtn.addEventListener('click', () => {
+    gsap.to(startWorkoutBtn, {
+      scale: 0.95,
+      duration: 0.1,
+      yoyo: true,
+      repeat: 1
+    });
+  });
+
+  // Notification button
+  const notificationBtn = document.querySelector('.notification-button');
+  notificationBtn.addEventListener('click', () => {
+    gsap.to(notificationBtn, {
+      scale: 0.9,
+      duration: 0.1,
+      yoyo: true,
+      repeat: 1
+    });
+  });
+}
+
+// Initialize everything when the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  initializeCharts();
+  populateRecommendations();
+  initializeAnimations();
+  initializeEventListeners();
 });
-

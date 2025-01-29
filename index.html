@@ -13,14 +13,6 @@
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script type="module" src="./modals.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-  <script type="module" src="./firebase-config.js"></script>
-  <script type="module" src="./auth.js"></script>
-  <script type="module" src="./app.js"></script>
-  <script type="module" src="./body-analysis.js"></script>
 </head>
 <body>
   <!-- Login Page -->
@@ -159,42 +151,9 @@
           </div>
         </div>
 
-        <div class="chart-card body-analysis">
-          <div class="chart-header">
-            <h2>Body Analysis</h2>
-            <button id="updateBodyAnalysis" class="button-primary">Update Analysis</button>
-          </div>
-          <div class="body-analysis-content">
-            <div id="bodyAnalysisForm" style="display: none;">
-              <div class="upload-container">
-                <input type="file" id="bodyImage" accept="image/*" class="file-input" />
-                <label for="bodyImage" class="file-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span>Choose Image</span>
-                </label>
-                <div id="imagePreview" class="image-preview"></div>
-              </div>
-              <div class="measurements-input">
-                <div class="input-group">
-                  <label for="height">Height (cm)</label>
-                  <input type="number" id="height" min="100" max="250" required />
-                </div>
-                <div class="input-group">
-                  <label for="weight">Weight (kg)</label>
-                  <input type="number" id="weight" min="30" max="200" required />
-                </div>
-              </div>
-              <button id="analyzeBody" class="button-primary">Analyze</button>
-            </div>
-            <div id="analysisResults" class="analysis-results">
-              <div class="loading-indicator" style="display: none;">
-                <div class="spinner"></div>
-                <p>Analyzing your body composition...</p>
-              </div>
-              <div class="results-content">
-                <!-- Results will be populated here -->
-              </div>
-            </div>
+        <div class="chart-card recommendations">
+          <h2>AI Recommendations</h2>
+          <div class="recommendations-list">
           </div>
         </div>
       </div>
@@ -231,6 +190,6 @@
       document.getElementById('logoutButton').addEventListener('click', handleSignOut);
     });
   </script>
-  <script type="module" src="./sheets-dashboard.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
