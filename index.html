@@ -9,18 +9,17 @@
   <link rel="stylesheet" href="./style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
+  
+  <!-- Third-party libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <!-- Add Firebase Scripts -->
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-  <script type="module" src="./firebase-config.js"></script>
-  <script type="module" src="./auth.js"></script>
-  <script type="module" src="./app.js"></script>
-  <script type="module" src="./modals.js"></script>
 </head>
 <body>
   <!-- Login Page -->
@@ -184,18 +183,21 @@
     </main>
   </div>
 
+  <!-- App Scripts - Load after Firebase is initialized -->
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./auth.js"></script>
+  <script type="module" src="./app.js"></script>
+
   <script type="module">
     import { initAuth, signInWithGoogle, handleSignOut } from './auth.js';
 
-    // Wait for the DOM to be fully loaded
     window.addEventListener('load', () => {
       initAuth();
     });
 
-    // Add event listeners
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('googleSignIn').addEventListener('click', signInWithGoogle);
-      document.getElementById('logoutButton').addEventListener('click', handleSignOut);
+      document.getElementById('googleSignIn')?.addEventListener('click', signInWithGoogle);
+      document.getElementById('logoutButton')?.addEventListener('click', handleSignOut);
     });
   </script>
 </body>

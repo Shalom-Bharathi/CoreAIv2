@@ -1,43 +1,28 @@
-// Initialize Firebase
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js';
+// Remove Firebase initialization imports and use the existing instance
+import { auth, firestore } from './firebase-config.js';
 import { showBodyDetailsModal, hideBodyDetailsModal } from './modals.js';
-import { auth } from './firebase-config.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
-  authDomain: "coreai-82c79.firebaseapp.com",
-  projectId: "coreai-82c79",
-  storageBucket: "coreai-82c79.firebasestorage.app",
-  messagingSenderId: "97395011364",
-  appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
-  measurementId: "G-0J1RLMVEGC"
-};
-
-const app = initializeApp(firebaseConfig);
-const provider = new GoogleAuthProvider();
-const db = getFirestore(app);
+const provider = new firebase.auth.GoogleAuthProvider();
 
 // Handle Authentication State Changes
 export function initAuth() {
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(async (user) => {
     const loginPage = document.getElementById('loginPage');
-    const app = document.getElementById('app');
+    const appElement = document.getElementById('app');
     
     if (user) {
       try {
         // Check if user has body details
-        const userDetailsRef = doc(db, 'body-details', user.uid);
-        const userDetailsDoc = await getDoc(userDetailsRef);
+        const userDetailsRef = firestore.collection('body-details').doc(user.uid);
+        const userDetailsDoc = await userDetailsRef.get();
         
-        if (!userDetailsDoc.exists()) {
+        if (!userDetailsDoc.exists) {
           showBodyDetailsModal();
         }
 
         // Update UI
         loginPage.style.display = 'none';
-        app.style.display = 'flex';
+        appElement.style.display = 'flex';
         
         // Update user info
         updateUserInfo(user);
@@ -46,7 +31,7 @@ export function initAuth() {
       }
     } else {
       loginPage.style.display = 'flex';
-      app.style.display = 'none';
+      appElement.style.display = 'none';
     }
   });
 }
@@ -65,7 +50,7 @@ export async function saveBodyDetails(details) {
   const user = auth.currentUser;
   if (user) {
     try {
-      await setDoc(doc(db, 'body-details', user.uid), {
+      await firestore.collection('body-details').doc(user.uid).set({
         ...details,
         updatedAt: new Date().toISOString()
       });
