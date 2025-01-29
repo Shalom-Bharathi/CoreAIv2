@@ -1,4 +1,5 @@
 import { DashboardSheetsIntegration } from './sheets-dashboard.js';
+import { analyzeBody, getLatestAnalysis } from './body-analysis.js';
 
 // Initialize sheets integration
 const sheetsIntegration = new DashboardSheetsIntegration();
@@ -139,10 +140,133 @@ function updateCaloriesChart(history) {
   });
 }
 
+// Body Analysis Functions
+async function initializeBodyAnalysis() {
+  const updateButton = document.getElementById('updateBodyAnalysis');
+  const analysisForm = document.getElementById('bodyAnalysisForm');
+  const analyzeButton = document.getElementById('analyzeBody');
+  const fileInput = document.getElementById('bodyImage');
+  const imagePreview = document.getElementById('imagePreview');
+  const loadingIndicator = document.querySelector('.loading-indicator');
+  const resultsContent = document.querySelector('.results-content');
+
+  // Load latest analysis if available
+  const latestAnalysis = await getLatestAnalysis();
+  if (latestAnalysis) {
+    displayAnalysisResults(latestAnalysis.analysis);
+  }
+
+  updateButton.addEventListener('click', () => {
+    analysisForm.style.display = analysisForm.style.display === 'none' ? 'block' : 'none';
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.innerHTML = `<img src="${e.target.result}" alt="Body preview">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  analyzeButton.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    const height = document.getElementById('height').value;
+    const weight = document.getElementById('weight').value;
+
+    if (!file || !height || !weight) {
+      alert('Please provide an image and your measurements');
+      return;
+    }
+
+    try {
+      loadingIndicator.style.display = 'flex';
+      resultsContent.style.display = 'none';
+      analysisForm.style.display = 'none';
+
+      // Upload image to Firebase Storage
+      const user = firebase.auth().currentUser;
+      const storageRef = firebase.storage().ref();
+      const imageRef = storageRef.child(`body-images/${user.uid}/${Date.now()}_${file.name}`);
+      await imageRef.put(file);
+      const imageUrl = await imageRef.getDownloadURL();
+
+      // Analyze body
+      const analysis = await analyzeBody(imageUrl, height, weight);
+      displayAnalysisResults(analysis);
+    } catch (error) {
+      console.error('Error during body analysis:', error);
+      alert('An error occurred during analysis. Please try again.');
+    } finally {
+      loadingIndicator.style.display = 'none';
+      resultsContent.style.display = 'grid';
+    }
+  });
+}
+
+function displayAnalysisResults(analysis) {
+  const resultsContent = document.querySelector('.results-content');
+  
+  const resultsHTML = `
+    <div class="result-item">
+      <h4>Body Type</h4>
+      <p>${analysis.bodyType}</p>
+    </div>
+    <div class="result-item">
+      <h4>Muscle Distribution</h4>
+      <p><strong>Upper Body:</strong> ${analysis.muscleDistribution.upperBody}</p>
+      <p><strong>Core:</strong> ${analysis.muscleDistribution.core}</p>
+      <p><strong>Lower Body:</strong> ${analysis.muscleDistribution.lowerBody}</p>
+    </div>
+    <div class="result-item">
+      <h4>Fat Distribution</h4>
+      <p><strong>Upper Body:</strong> ${analysis.fatDistribution.upperBody}</p>
+      <p><strong>Core:</strong> ${analysis.fatDistribution.core}</p>
+      <p><strong>Lower Body:</strong> ${analysis.fatDistribution.lowerBody}</p>
+    </div>
+    <div class="result-item">
+      <h4>Muscle Definition</h4>
+      <p>${analysis.muscleDefinition}</p>
+    </div>
+    <div class="result-item">
+      <h4>Posture Analysis</h4>
+      <p>${analysis.posture}</p>
+    </div>
+    <div class="result-item">
+      <h4>Body Composition</h4>
+      <p><strong>Estimated Body Fat:</strong> ${analysis.estimatedBodyFatPercentage}</p>
+      <p><strong>Estimated Biological Age:</strong> ${analysis.estimatedBiologicalAge}</p>
+    </div>
+    <div class="result-item">
+      <h4>Recommendations</h4>
+      <div class="recommendations-list">
+        <div class="recommendation-item">
+          <h5>Training</h5>
+          <ul>${analysis.recommendations.training.map(rec => `<li>${rec}</li>`).join('')}</ul>
+        </div>
+        <div class="recommendation-item">
+          <h5>Nutrition</h5>
+          <ul>${analysis.recommendations.nutrition.map(rec => `<li>${rec}</li>`).join('')}</ul>
+        </div>
+        <div class="recommendation-item">
+          <h5>Posture</h5>
+          <ul>${analysis.recommendations.posture.map(rec => `<li>${rec}</li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  resultsContent.innerHTML = resultsHTML;
+  resultsContent.style.display = 'grid';
+}
+
 // Initialize dashboard when user is authenticated
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
     updateDashboardStats(user.uid);
+    initializeBodyAnalysis();
   }
 });
 
