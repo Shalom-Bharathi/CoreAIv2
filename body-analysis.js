@@ -1,10 +1,9 @@
-let API_KEY;
-let thingsRef;
-let unsubscribe;
-let db = firebase.firestore();
-thingsRef = db.collection('API');
+import { firestore, auth, storage } from './firebase-config.js';
 
-unsubscribe = thingsRef.onSnapshot(querySnapshot => {
+let API_KEY;
+const thingsRef = firestore.collection('API');
+
+const unsubscribe = thingsRef.onSnapshot(querySnapshot => {
   querySnapshot.docs.forEach(doc => {
     API_KEY = doc.data().API;
     console.log('API Key loaded:', API_KEY ? 'Key present' : 'Key missing');
@@ -78,12 +77,12 @@ export async function analyzeBody(imageUrl) {
     const analysisResult = JSON.parse(data.choices[0].message.content);
 
     // Store the analysis in Firebase
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (user) {
-      await firebase.firestore().collection('bodyAnalysis').doc(user.uid).set({
+      await firestore.collection('bodyAnalysis').doc(user.uid).set({
         analysis: analysisResult,
         imageUrl,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firestore.FieldValue.serverTimestamp()
       });
     }
 
@@ -95,11 +94,11 @@ export async function analyzeBody(imageUrl) {
 }
 
 export async function getLatestAnalysis() {
-  const user = firebase.auth().currentUser;
+  const user = auth.currentUser;
   if (!user) return null;
 
   try {
-    const doc = await firebase.firestore().collection('bodyAnalysis').doc(user.uid).get();
+    const doc = await firestore.collection('bodyAnalysis').doc(user.uid).get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error('Error fetching analysis:', error);

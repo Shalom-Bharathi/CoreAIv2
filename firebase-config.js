@@ -1,44 +1,16 @@
-// Import Firebase modules
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js';
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  addDoc, 
-  doc, 
-  getDoc,
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  serverTimestamp 
-} from 'https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js';
-
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAtBxeZrh4cej7ZzsKZ5uN-BqC_wxoTmdE",
-  authDomain: "coreai-82c79.firebaseapp.com",
-  databaseURL: "https://coreai-82c79-default-rtdb.firebaseio.com",
-  projectId: "coreai-82c79",
-  storageBucket: "coreai-82c79.firebasestorage.app",
-  messagingSenderId: "97395011364",
-  appId: "1:97395011364:web:1e8f6a06fce409bfd80db1",
-  measurementId: "G-0J1RLMVEGC"
+  authDomain: "total-treat-423211-a1.firebaseapp.com",
+  projectId: "total-treat-423211-a1",
+  storageBucket: "total-treat-423211-a1.appspot.com",
+  messagingSenderId: "1051641122651",
+  appId: "1:1051641122651:web:c4c5c0a0a0a0a0a0a0a0a0"
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const firestore = {
-  collection,
-  getDocs,
-  addDoc,
-  doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  serverTimestamp
-}; 
+firebase.initializeApp(firebaseConfig);
+
+export const auth = firebase.auth();
+export const firestore = firebase.firestore();
+export const storage = firebase.storage(); 
