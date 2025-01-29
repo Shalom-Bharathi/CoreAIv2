@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meditation</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/27dfd8c49e.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <!-- Copy sidebar from index.html -->
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-content">
+                    <h1>Meditation</h1>
+                    <p>Take a moment to breathe and find your center.</p>
+                </div>
+            </header>
+
+            <div class="flex items-center justify-center flex-1 p-8">
+                <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full p-8">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-cal-sans text-gray-800 mb-2">Guided Breathing</h2>
+                        <p class="text-gray-600">Follow the circle's rhythm for deep, mindful breathing</p>
+                    </div>
+
+                    <div class="relative w-32 h-32 mx-auto my-8">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full 
+                                  animate-breathe shadow-[0_0_20px_rgba(147,197,253,0.3)]">
+                        </div>
+                    </div>
+                    
+                    <div class="font-cal-sans text-6xl text-center text-gray-800 tracking-tight my-6">
+                        05:00
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 my-8">
+                        <button onclick="setTimer(3)" class="button-primary py-4 text-lg">
+                            <i class="fas fa-clock mr-2"></i>3 Minutes
+                        </button>
+                        <button onclick="setTimer(5)" class="button-primary py-4 text-lg">
+                            <i class="fas fa-clock mr-2"></i>5 Minutes
+                        </button>
+                        <button onclick="startTimer()" class="button-primary py-4 text-lg">
+                            <i class="fas fa-play mr-2"></i>Start
+                        </button>
+                        <button onclick="resetTimer()" class="button-primary py-4 text-lg">
+                            <i class="fas fa-redo mr-2"></i>Reset
+                        </button>
+                    </div>
+
+                    <div class="text-center text-gray-600 text-lg font-medium">
+                        <i class="fas fa-lungs mr-2"></i>
+                        <span>Breathe in... Breathe out...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        @keyframes breathe {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                transform: scale(1.2);
+                box-shadow: 0 0 40px rgba(147, 197, 253, 0.5);
+            }
+        }
+
+        .animate-breathe {
+            animation: breathe 4s infinite ease-in-out;
+        }
+
+        .font-cal-sans {
+            font-family: 'Cal Sans', sans-serif;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+    </style>
+
+    <script>
+        let timeLeft = 300;
+        let timerId = null;
+        const timerDisplay = document.querySelector('.text-6xl');
+        const startButton = document.querySelector('button[onclick="startTimer()"]');
+        const statusText = document.querySelector('.text-gray-600 span');
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function setTimer(minutes) {
+            resetTimer();
+            timeLeft = minutes * 60;
+            updateDisplay();
+        }
+
+        function startTimer() {
+            if (timerId !== null) return;
+            
+            startButton.disabled = true;
+            startButton.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause';
+            
+            timerId = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    timerId = null;
+                    startButton.disabled = false;
+                    startButton.innerHTML = '<i class="fas fa-play mr-2"></i>Start';
+                    statusText.textContent = 'Session completed!';
+                    return;
+                }
+                timeLeft--;
+                updateDisplay();
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            startButton.disabled = false;
+            startButton.innerHTML = '<i class="fas fa-play mr-2"></i>Start';
+            timeLeft = 300;
+            statusText.textContent = 'Breathe in... Breathe out...';
+            updateDisplay();
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>

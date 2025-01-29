@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Head section remains the same -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relaxing Sounds</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://kit.fontawesome.com/27dfd8c49e.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+
+    <style>
+        body {
+            background-color: var(--background);
+        }
+
+        .sound {
+            background-color: var(--card);
+            flex: 1;
+            min-width: 300px;
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .sound:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .waveform {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 150px;
+            position: relative;
+        }
+
+        .waveform::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.5rem;
+        }
+
+        .sound-icon {
+            background-color: var(--primary-light);
+            padding: 15px;
+            height: 50px;
+            width: 50px;
+            border-radius: 100%;
+            text-align: center;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .sounds-container {
+                flex-direction: column;
+            }
+            .sound {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+        <!-- Sidebar remains the same -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span class="logo-text">CoreAI</span>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="../index.html" class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1" />
+                            <rect width="7" height="5" x="14" y="3" rx="1" />
+                            <rect width="7" height="9" x="14" y="12" rx="1" />
+                            <rect width="7" height="5" x="3" y="16" rx="1" />
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <span>Workouts</span>
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </a>
+                    <a href="#" class="nav-link active">
+                        <svg width="20" height="20" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M128 352.576V352a288 288 0 0 1 491.072-204.224 192 192 0 0 1 274.24 204.48 64 64 0 0 1 57.216 74.24C921.6 600.512 850.048 710.656 736 756.992V800a96 96 0 0 1-96 96H384a96 96 0 0 1-96-96v-43.008c-114.048-46.336-185.6-156.48-214.528-330.496A64 64 0 0 1 128 352.64zm64-.576h64a160 160 0 0 1 320 0h64a224 224 0 0 0-448 0zm128 0h192a96 96 0 0 0-192 0zm439.424 0h68.544A128.256 128.256 0 0 0 704 192c-15.36 0-29.952 2.688-43.52 7.616 11.328 18.176 20.672 37.76 27.84 58.304A64.128 64.128 0 0 1 759.424 352zM672 768H352v32a32 32 0 0 0 32 32h256a32 32 0 0 0 32-32v-32zm-342.528-64h365.056c101.504-32.64 165.76-124.928 192.896-288H136.576c27.136 163.072 91.392 255.36 192.896 288z" />
+                        </svg>
+                        <span>Diets</span>
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </a>
+                    <!-- Other nav links remain the same as in index.html -->
+                </nav>
+            </div>
+
+            <button class="logout-button nav-link" id="logoutButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" x2="9" y1="12" y2="12" />
+                </svg>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-content">
+                    <h1>Relaxing Sounds</h1>
+                    <p>Listen to sounds that help you relax and focus.</p>
+                </div>
+            </header>
+            
+            <section class="mt-8">
+                <div class="sounds-container flex gap-6">
+                    <!-- Card 1 -->
+                    <div class="sound p-6">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="sound-icon">
+                                <i class="fas fa-tree text-2xl"></i>
+                            </div>
+                            <h2 class="text-xl font-semibold">Forest Sounds</h2>
+                        </div>
+                        <div id="waveform1" class=" waveform bg-gray-50 rounded-lg p-4" style="background-image: url('https://c4.wallpaperflare.com/wallpaper/566/335/681/forest-firewatch-nature-digital-art-wallpaper-preview.jpg')"></div>
+                        <button id="musicplay1" class="button-primary w-full mt-4">
+                            <i class="fa-solid fa-play mr-2"></i><span>Play</span>
+                        </button>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="sound p-6">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="sound-icon">
+                                <i class="fas fa-water text-2xl"></i>
+                            </div>
+                            <h2 class="text-xl font-semibold">Ocean Waves</h2>
+                        </div>
+                        <div id="waveform2" class="waveform bg-gray-50 rounded-lg p-4" style="background-image: url('https://img.freepik.com/premium-photo/painting-wave-that-has-word-ocean-itwave-illustration-summer-summer-travel-wave-el_432516-28171.jpg')"></div>
+                        <button id="musicplay2" class="button-primary w-full mt-4">
+                            <i class="fa-solid fa-play mr-2"></i><span>Play</span>
+                        </button>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="sound p-6">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="sound-icon">
+                                <i class="fas fa-cloud-rain text-2xl"></i>
+                            </div>
+                            <h2 class="text-xl font-semibold">Rainfall</h2>
+                        </div>
+                        <div id="waveform3" class=" waveform bg-gray-50 rounded-lg p-4" style="background-image: url('https://static.vecteezy.com/system/resources/previews/003/538/558/non_2x/rain-background-with-drops-and-splashes-illustration-vector.jpg');"></div>
+                        <button id="musicplay3" class="button-primary w-full mt-4">
+                            <i class="fa-solid fa-play mr-2"></i><span>Play</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Create WaveSurfer instances for each card
+        const wavesurfers = [
+            {
+                container: '#waveform1',
+                buttonId: 'musicplay1',
+                url: 'Sounds/birds39-forest-20772.mp3',
+            },
+            {
+                container: '#waveform2',
+                buttonId: 'musicplay2',
+                url: 'Sounds/ocean-waves-250310.mp3',
+            },
+            {
+                container: '#waveform3',
+                buttonId: 'musicplay3',
+                url: 'Sounds/rain-sound-272604.mp3',
+            },
+        ];
+
+        wavesurfers.forEach((item) => {
+            const wavesurfer = WaveSurfer.create({
+                container: item.container,
+                waveColor: 'white',  // Using primary color
+                progressColor: '#6366f1', // Using primary-hover color
+                barWidth: 4,
+                barRadius: 4,
+                url: item.url,
+            });
+
+            const playButton = document.getElementById(item.buttonId);
+            const buttonIcon = playButton.querySelector('i');
+            const buttonText = playButton.querySelector('span');
+
+            const updatePlayButton = (isPlaying) => {
+                if (isPlaying) {
+                    buttonIcon.classList.remove('fa-play');
+                    buttonIcon.classList.add('fa-pause');
+                    buttonText.textContent = 'Pause';
+                } else {
+                    buttonIcon.classList.remove('fa-pause');
+                    buttonIcon.classList.add('fa-play');
+                    buttonText.textContent = 'Play';
+                }
+            };
+
+            playButton.onclick = function () {
+                wavesurfer.playPause();
+            };
+
+            wavesurfer.on('play', () => updatePlayButton(true));
+            wavesurfer.on('pause', () => updatePlayButton(false));
+        });
+    </script>
+</body>
+</html>

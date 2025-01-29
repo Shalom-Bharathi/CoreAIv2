@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreAI - Health & Wellness</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=cal-sans@400,500,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <script src="https://kit.fontawesome.com/27dfd8c49e.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .card {
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            min-width: 150px;
+            border-radius: 0.75rem;
+            background-color: var(--card);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        i {
+            background-color: var(--primary-light);
+            padding: 15px;
+            height: 50px;
+            width: 50px;
+            border-radius: 100%;
+            text-align: center;
+        }
+
+        .normal-icon {
+            background: none;
+            width: initial;
+            height: initial;
+            color: white;
+            padding: 0px;
+        }
+    
+        /* Updated carousel styles */
+        .carousel {
+            height: 80vh;
+            margin-top: 20px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            border-radius: 0.75rem;
+            background: var(--card);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .carousel .list .item {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0 0 0 0;
+        }
+
+        .carousel .list .item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);  /* Darken image slightly */
+        }
+
+        .carousel .list .item .content {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1140px;
+            max-width: 80%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 40px;
+            box-sizing: border-box;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .carousel .list .item .title {
+            font-family: 'Cal Sans', sans-serif;
+            font-size: 3.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .carousel .list .item .topic {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2em;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .carousel .list .item .des {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
+
+        .carousel .list .item .buttons button {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .carousel .list .item .buttons button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Updated thumbnail styles */
+        .thumbnail {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+        }
+
+        .thumbnail .item {
+            width: 120px;
+            height: 180px;
+            flex-shrink: 0;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .thumbnail .item:hover {
+            transform: translateY(-5px);
+        }
+
+        .thumbnail .item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .thumbnail .item .content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: #fff;
+        }
+
+        .thumbnail .item .content .title {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .thumbnail .item .content .description {
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+
+        /* Updated arrows */
+        .arrows {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .arrows button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            border: none;
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrows button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+
+        /* Responsive adjustments */
+        @media screen and (max-width: 768px) {
+            .carousel {
+                height: 70vh;
+            }
+
+            .carousel .list .item .title {
+                font-size: 2.5em;
+            }
+
+            .thumbnail {
+                display: none;
+            }
+
+            .arrows {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+
+    </style>
+
+</head>
+
+<body>
+
+    <div id="app" class="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span class="logo-text">CoreAI</span>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="../index.html" class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1" />
+                            <rect width="7" height="5" x="14" y="3" rx="1" />
+                            <rect width="7" height="9" x="14" y="12" rx="1" />
+                            <rect width="7" height="5" x="3" y="16" rx="1" />
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <span>Workouts</span>
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </a>
+                    <a href="#" class="nav-link active">
+                        <svg width="20" height="20" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M128 352.576V352a288 288 0 0 1 491.072-204.224 192 192 0 0 1 274.24 204.48 64 64 0 0 1 57.216 74.24C921.6 600.512 850.048 710.656 736 756.992V800a96 96 0 0 1-96 96H384a96 96 0 0 1-96-96v-43.008c-114.048-46.336-185.6-156.48-214.528-330.496A64 64 0 0 1 128 352.64zm64-.576h64a160 160 0 0 1 320 0h64a224 224 0 0 0-448 0zm128 0h192a96 96 0 0 0-192 0zm439.424 0h68.544A128.256 128.256 0 0 0 704 192c-15.36 0-29.952 2.688-43.52 7.616 11.328 18.176 20.672 37.76 27.84 58.304A64.128 64.128 0 0 1 759.424 352zM672 768H352v32a32 32 0 0 0 32 32h256a32 32 0 0 0 32-32v-32zm-342.528-64h365.056c101.504-32.64 165.76-124.928 192.896-288H136.576c27.136 163.072 91.392 255.36 192.896 288z" />
+                        </svg>
+                        <span>Diets</span>
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </a>
+                    <!-- Other nav links remain the same as in index.html -->
+                </nav>
+            </div>
+
+            <button class="logout-button nav-link" id="logoutButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" x2="9" y1="12" y2="12" />
+                </svg>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-content">
+                    <h1>Health</h1>
+                    <p>Enhance your well-being with personalized insights and tools.</p>
+                </div>
+            </header>
+
+            <section id="Relaxation">
+                <h1 class="text-2xl font-semibold">Mindfulness and Relaxation</h1>
+
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mt-5">
+
+                  <!-- Relaxing Activities Card -->
+                  <div class="card flex-1">
+                      <div class="flex items-center gap-3 mb-5">
+                          <i class="fas fa-couch"></i>
+                          <h1 class="text-xl font-semibold mb-2">Relaxing Activities</h1>
+                      </div>
+                      <p>Engage in soothing activities to unwind and recharge.</p>
+                       <button class="button-primary mt-2" id="r-btn">Learn More</button>
+                  </div>
+              
+                  <!-- Nature Sounds Card -->
+                  <div class="card flex-1">
+                      <div class="flex items-center gap-3 mb-5">
+                          <i class="fas fa-tree"></i>
+                          <h1 class="text-xl font-semibold mb-2">Nature Sounds</h1>
+                      </div>
+                      <p>Listen to soothing sounds of nature to enhance focus and calm.</p>
+                      <a href="sounds.html"><button class="button-primary mt-2" id="n-btn">Listen Now!</button></a>
+                  </div>
+              
+                  <!-- Guided Meditations Card -->
+                  <div class="card flex-1">
+                      <div class="flex items-center gap-3 mb-5">
+                          <i class="fas fa-head-side-virus"></i>
+                          <h1 class="text-xl font-semibold mb-2">Guided Meditations</h1>
+                      </div>
+                      <p>Try guided meditation to clear your mind and find inner peace.</p>
+                      <a href="meditation.html"><button class="button-primary mt-2" id="g-btn">Meditate Now</button></a>
+                  </div>
+              
+              </div>
+              
+              
+
+            </section>
+
+            <section id="symptoms" class="mt-12">
+
+              <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Symptom Checker Card -->
+                <div class="bg-white shadow-lg p-6 rounded-xl flex-1">
+                  <h2 class="text-2xl font-semibold text-gray-700 mb-4">Symptom Checker</h2>
+                  <textarea 
+                    name="symptoms" 
+                    id="symptoms" 
+                    placeholder="Type your symptoms here" 
+                    class="min-h-[200px] w-full border-2 border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  ></textarea>
+                  <button 
+                    class="bg-blue-500 text-white py-2 px-6 rounded-full mt-4 hover:bg-blue-600 transition">
+                    Submit
+                  </button>
+                </div>
+              
+                <!-- Tips and Evidence Card -->
+                <div class="bg-white shadow-lg p-6 rounded-xl flex-1 lg:flex-[2]" id="tips-card">
+                  <h2 class="text-xl font-semibold text-gray-800 mb-2" id="tip-title"></h2>
+                  <p class="text-gray-600 mb-4" id="tip-content"></p>
+                  <div class="bg-blue-100 p-4 rounded-lg" id="evidence-section" >
+                    <h3 class="text-lg font-medium text-blue-700 mb-2" id="evidence-title">Evidence:</h3>
+                    <ul class="list-disc list-inside text-gray-700" id="evidence-list"></ul>
+                  </div>
+                </div>              
+
+            </section>
+
+            <section class="mt-12">
+            
+             
+     
+     <div class="container">
+ 
+        <div class="carousel">
+            <!-- list item -->
+            <div class="list">
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1666299843781-52033bbcc1ee?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cGxhc3RpYyUyMHdhdGVyJTIwYm90dGxlfGVufDB8fDB8fHww">
+                    <div class="content">
+                        <div class="title">30-Day Water Challenge</div>
+                        <div class="topic">HYDRATION</div>
+                        <div class="des">
+                            Transform your health with our 30-day water challenge! Drink 8 glasses of water daily to boost energy, improve skin health, and enhance mental clarity. Track your progress, set reminders, and watch your body transform with proper hydration.
+                        </div>
+                        <div class="buttons">
+                            <button>JOIN CHALLENGE</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1669021454145-49146869b916?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWFuJTIwcnVubmluZ3xlbnwwfHwwfHx8MA%3D%3D">
+                    <div class="content">
+                        <div class="title">Mindful Eating Challenge</div>
+                        <div class="topic">NUTRITION</div>
+                        <div class="des">
+                            Join our mindful eating challenge to develop a healthier relationship with food. Learn to eat slowly, recognize hunger cues, and appreciate every bite. This challenge will help you make better food choices and improve digestion.
+                        </div>
+                        <div class="buttons">
+                            <button>JOIN CHALLENGE</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1661454345269-c6ab685d3b01?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fHNsZWVwaW5nJTIwcGVyc29ufGVufDB8fDB8fHww">
+                    <div class="content">
+                        <div class="title">Sleep Better Challenge</div>
+                        <div class="topic">REST</div>
+                        <div class="des">
+                            Transform your sleep quality with our 21-day better sleep challenge. Develop a consistent sleep schedule, create the perfect bedtime routine, and wake up feeling refreshed. Better sleep leads to better health!
+                        </div>
+                        <div class="buttons">
+                            <button>JOIN CHALLENGE</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80">
+                    <div class="content">
+                        <div class="title">Stress-Free Living</div>
+                        <div class="topic">WELLNESS</div>
+                        <div class="des">
+                            Take control of your mental well-being with our stress management challenge. Learn daily meditation, breathing exercises, and relaxation techniques to reduce stress and anxiety in your life.
+                        </div>
+                        <div class="buttons">
+                            <button>JOIN CHALLENGE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- list thumnail -->
+            <div class="thumbnail">
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1666299843781-52033bbcc1ee?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cGxhc3RpYyUyMHdhdGVyJTIwYm90dGxlfGVufDB8fDB8fHww">
+                    <div class="content">
+                        <div class="title">
+                            Water Challenge
+                        </div>
+                        <div class="description">
+                            30 Days to Better Hydration
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1669021454145-49146869b916?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWFuJTIwcnVubmluZ3xlbnwwfHwwfHx8MA%3D%3D">
+                    <div class="content">
+                        <div class="title">
+                            Mindful Eating
+                        </div>
+                        <div class="description">
+                            Transform Your Diet Habits
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://plus.unsplash.com/premium_photo-1661454345269-c6ab685d3b01?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fHNsZWVwaW5nJTIwcGVyc29ufGVufDB8fDB8fHww">
+                    <div class="content">
+                        <div class="title">
+                            Better Sleep
+                        </div>
+                        <div class="description">
+                            21 Days to Quality Rest
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80">
+                    <div class="content">
+                        <div class="title">
+                            Stress Management
+                        </div>
+                        <div class="description">
+                            Path to Inner Peace
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- next prev -->
+    
+            <div class="arrows">
+                <button id="prev"><</button>
+                <button id="next">></button>
+            </div>
+            <!-- time running -->
+            <div class="time"></div>
+        </div>
+ 
+     </div>
+              
+            </section>
+
+        </main>
+
+    </div>
+
+<script>
+
+function tips() {
+  const rawData = [
+    {
+      title: "Stay Hydrated",
+      content: "Drink plenty of water daily to stay energized.",
+      evidence: [
+        "Increases focus by 10%",
+        "Improves digestion and skin health",
+      ],
+    },
+  ];
+
+  // Get the DOM elements to update
+  const tip_title = document.getElementById("tip-title");
+  const tip_content = document.getElementById("tip-content");
+  const ev_title = document.getElementById("evidence-title");
+  const ev_content = document.getElementById("evidence-list");
+
+  // Access the first (and only) tip from the rawData
+  const tip = rawData[0]; // Accessing the first object in the array
+
+  // Update the DOM with the parsed data
+  tip_title.textContent = tip.title;
+  tip_content.textContent = tip.content;
+
+  // Update the evidence section
+  ev_title.textContent = tip.evidence.length > 0 ? "Evidence:" : "No Evidence"; // Check if evidence exists
+  ev_content.innerHTML = ""; // Clear any previous evidence
+
+  // Add new evidence items
+  tip.evidence.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    ev_content.appendChild(li);
+  });
+}
+
+// Call the function
+tips();
+
+function slider(){
+    // Get DOM elements using correct selectors
+    const nextDom = document.getElementById('next');
+    const prevDom = document.getElementById('prev');
+    const carouselDom = document.querySelector('.carousel');
+    const SliderDom = carouselDom.querySelector('.list');
+    const thumbnailBorderDom = document.querySelector('.carousel .thumbnail');
+    const thumbnailItemsDom = thumbnailBorderDom.querySelectorAll('.item');
+
+    thumbnailBorderDom.appendChild(thumbnailItemsDom[0]);
+    const timeRunning = 3000;
+    const timeAutoNext = 7000;
+
+    nextDom.onclick = function(){
+        showSlider('next');    
+    }
+
+    prevDom.onclick = function(){
+        showSlider('prev');    
+    }
+
+    let runTimeOut;
+    let runNextAuto = setTimeout(() => {
+        nextDom.click(); // Changed from next.click()
+    }, timeAutoNext);
+
+    function showSlider(type){
+        const SliderItemsDom = SliderDom.querySelectorAll('.item');
+        const thumbnailItemsDom = document.querySelectorAll('.carousel .thumbnail .item');
+        
+        if(type === 'next'){
+            SliderDom.appendChild(SliderItemsDom[0]);
+            thumbnailBorderDom.appendChild(thumbnailItemsDom[0]);
+            carouselDom.classList.add('next');
+        }else{
+            SliderDom.prepend(SliderItemsDom[SliderItemsDom.length - 1]);
+            thumbnailBorderDom.prepend(thumbnailItemsDom[thumbnailItemsDom.length - 1]);
+            carouselDom.classList.add('prev');
+        }
+
+        clearTimeout(runTimeOut);
+        runTimeOut = setTimeout(() => {
+            carouselDom.classList.remove('next');
+            carouselDom.classList.remove('prev');
+        }, timeRunning);
+
+        clearTimeout(runNextAuto);
+        runNextAuto = setTimeout(() => {
+            nextDom.click(); // Changed from next.click()
+        }, timeAutoNext);
+    }
+}
+
+slider();
+
+</script>
+
+</body>
+
+</html>
