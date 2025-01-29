@@ -649,7 +649,7 @@ window.analyzeBodyImage = async () => {
       throw new Error('User not authenticated');
     }
 
-    // Upload image to Firebase Storage
+    // Upload image to Firebase Storage with CORS headers
     const storageRef = storage.ref();
     const imageRef = storageRef.child(`body-analysis/${user.uid}/${Date.now()}.jpg`);
     
@@ -657,8 +657,16 @@ window.analyzeBodyImage = async () => {
     const response = await fetch(selectedBodyImage);
     const blob = await response.blob();
     
-    // Upload image
-    const snapshot = await imageRef.put(blob);
+    // Set metadata with CORS configuration
+    const metadata = {
+      contentType: 'image/jpeg',
+      customMetadata: {
+        'Access-Control-Allow-Origin': 'https://shalom-bharathi.github.io'
+      }
+    };
+    
+    // Upload image with metadata
+    const snapshot = await imageRef.put(blob, metadata);
     const imageUrl = await snapshot.ref.getDownloadURL();
 
     // Analyze the image
