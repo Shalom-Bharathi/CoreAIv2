@@ -582,8 +582,17 @@ async function generateDietPlan() {
       throw new Error('Invalid response format from OpenAI API');
     }
 
+    // Extract JSON content from the response, handling potential markdown code blocks
+    let jsonContent = data.choices[0].message.content;
+    
+    // Remove markdown code block syntax if present
+    jsonContent = jsonContent.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    
+    // Trim any whitespace
+    jsonContent = jsonContent.trim();
+    
     // Parse the generated diet plan
-    const generatedDietPlan = JSON.parse(data.choices[0].message.content);
+    const generatedDietPlan = JSON.parse(jsonContent);
     
     // Save to Firebase
     await saveDietPlan(generatedDietPlan);
@@ -595,6 +604,9 @@ async function generateDietPlan() {
     window.location.href = '../diet-home/index.html';
   } catch (error) {
     console.error('Error generating diet plan:', error);
+    if (error instanceof SyntaxError) {
+      console.error('JSON parsing failed. Response content:', data?.choices?.[0]?.message?.content);
+    }
     loadingPopup.remove();
     showError('Failed to generate diet plan. Please try again.');
   }
